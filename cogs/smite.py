@@ -88,39 +88,42 @@ class smite(commands.Cog):
         embed = discord.Embed(colour=0x00b0f4, timestamp=datetime.now())
         embed.set_author(name=f"{gametype}")
 
-        t1Ratio = ''
-        t2Ratio = ''
+        teamOne, teamTwo, teamOnePlayerStats, teamTwoPlayerStats = [], [], [], []
 
-        team1 = []
-        team2 = []
-
-        for i in range(len(players)):
-            if players[i].taskForce == 1:
-                if players[i].playerName == "":
-                    players[i].playerName = "~~Hidden Profile~~"
-                    team1.append(players[i])
-                else:
-                    team1.append(players[i])
-
-            elif players[i].taskForce == 2:
-                if players[i].playerName == "":
-                    players[i].playerName = "~~Hidden Profile~~"
-                    team2.append(players[i])
-                else:
-                    team2.append(players[i])
+        for player in players:
+            (teamOne, teamTwo)[player.taskForce == 1].append(player)  # if taskforce == 1 append teamOne else team 2
+            if player.playerName == "":
+                player.playerName = "~~Hidden Profile~~"
+        for player in teamOne:
+            if player.playerName != "~~Hidden Profile~~":
+                teamOnePlayerStats.append(self.Smite.getPlayerStats(player.playerName))
             else:
-                print("not added")
+                teamOnePlayerStats.append(pyrez.Player)
+        for player in teamTwo:
+            if player.playerName != "~~Hidden Profile~~":
+                teamTwoPlayerStats.append(self.Smite.getPlayerStats(player.playerName))
+            else:
+                teamTwoPlayerStats.append(pyrez.Player)
 
-        if len(team1) == len(team2):
-            for i in range(len(team1)):
+        for i in range(len(teamOnePlayerStats)):
+            try:
+                _ = teamOnePlayerStats[i].winratio
+            except AttributeError:
+                teamOnePlayerStats[i].winratio = 0
 
-                embed.add_field(name=f"{team1[i].playerName}", value=f"\n{t1Ratio}", inline=True)
-                embed.add_field(name=f"{team1[i].accountLevel:3d} || {team2[i].accountLevel:3d}", value="", inline=True)
-                embed.add_field(name=f"{team2[i].playerName}",value=f"\n{t2Ratio}", inline=True)
+            try:
+                _ = teamTwoPlayerStats[i].winratio
+            except AttributeError:
+                teamTwoPlayerStats[i].winratio = 0
 
-            embed.set_footer(text=f"{players[0].matchId}", icon_url="")
+        for i in range(len(teamOne)):
 
-            return embed
+            embed.add_field(name=f"{teamOne[i].playerName}", value=f"\n W/L:{int(teamOnePlayerStats[i].winratio)}%  Rnk:{int(teamOne[i].Rank_Stat)}", inline=True)
+            embed.add_field(name=f"{teamOne[i].accountLevel:3d} || {teamTwo[i].accountLevel:3d}", value="", inline=True)
+            embed.add_field(name=f"{teamTwo[i].playerName}", value=f"\n{int(teamOnePlayerStats[i].winratio)}%  Rnk:{int(teamTwo[i].Rank_Stat)}", inline=True)
+
+        embed.set_footer(text=f"{players[0].matchId}", icon_url="")
+        return embed
 
     @commands.Cog.listener()
     async def on_ready(self):

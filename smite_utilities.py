@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class embedInfo():
+
+class embedInfo:
     def __init__(self):
         self.player = None
         self.livematch = None
@@ -21,7 +22,10 @@ class SmiteTracker:
         self.smite = SmiteAPI(devID, authKey)
 
     def getPlayerStats(self, inGameName: str):
-        return self.smite.getPlayer(inGameName)
+        try:
+            return self.smite.getPlayer(inGameName)
+        except pyrez.PlayerNotFound:
+            return pyrez.Player
 
     def getPlayerID(self, inGameName: str):
         try:
@@ -41,49 +45,41 @@ class SmiteTracker:
 
 
 def main():
-    id = int(os.getenv("DEV_ID"))
+    devID = int(os.getenv("DEV_ID"))
     key = os.getenv("AUTH_KEY")
-    wow = SmiteTracker(id, key)
-    name = "BOOM555"
+    wow = SmiteTracker(devID, key)
+    name = "rexsi"
 
     players = wow.getLiveMatch(name)
-    print(players)
-    team1 = []
-    team2 = []
 
-    for i in range(len(players)):
-        if players[i].taskForce == 1:
-            team1.append(players[i])
+    teamOne, teamTwo, teamOnePlayerStats, teamTwoPlayerStats = [], [], [], []
 
-        elif players[i].taskForce == 2:
-            team2.append(players[i])
+    for player in players:
+        (teamOne, teamTwo)[player.taskForce == 1].append(player)  # if taskforce == 1 append teamOne else team 2
+        if player.playerName == "":
+            player.playerName = "~~Hidden Profile~~"
+    for player in teamOne:
+        if player.playerName != "~~Hidden Profile~~":
+            teamOnePlayerStats.append(wow.getPlayerStats(player.playerName))
         else:
-            print("not added")
+            teamOnePlayerStats.append(pyrez.Player)
 
-    print("Team 1: \n", team1)
-    print("Team 2: \n", team2)
+    for player in teamTwo:
+        if player.playerName != "~~Hidden Profile~~":
+            teamTwoPlayerStats.append(wow.getPlayerStats(player.playerName))
+        else:
+            teamTwoPlayerStats.append(pyrez.Player)
 
-    # try:
-    #     for player in match:
-    #         try:
-    #
-    #             if player.playerName == "":
-    #                 print("No name found")
-    #             else:
-    #                 print(player.playerName)
-    #             print(player.accountLevel)
-    #             try:
-    #                 print(wow.getPlayerStats(player.playerId).winratio)
-    #             except AttributeError:
-    #                 print("Not found")
-    #         except pyrez.exceptions.PlayerNotFound:
-    #             print("Hidden Player")
-    #             print("-")
-    #             print("-")
-    # except TypeError:
-    #     pass
+    print(len(teamOne))
+    print(len(teamTwo))
 
-    # print(unformattedStats)
+    for i in range(len(teamOne)):
+        print("Team 1: \n", teamOne[i])
+        print(f"Stats: \n {int(teamOnePlayerStats[i].winratio)}% MMR: {teamOne[i].Rank_Stat}")
+
+    for i in range(len(teamTwo)):
+        print("Team 2: \n", teamTwo[i])
+        print(f"Stats: \n {int(teamOnePlayerStats[i].winratio)}% MMR: {teamTwo[i].Rank_Stat}")
 
 
 if __name__ == "__main__":
