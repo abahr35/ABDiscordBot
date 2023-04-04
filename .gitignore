@@ -1,0 +1,5 @@
+.env
+.log
+venv
+/PYREZ_LOG_FILE.log
+.idea
