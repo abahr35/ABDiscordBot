@@ -120,7 +120,7 @@ class smite(commands.Cog):
 
             embed.add_field(name=f"{teamOne[i].playerName}", value=f"\n W/L:{int(teamOnePlayerStats[i].winratio)}%  Rnk:{int(teamOne[i].Rank_Stat)}", inline=True)
             embed.add_field(name=f"{teamOne[i].accountLevel:3d} || {teamTwo[i].accountLevel:3d}", value="", inline=True)
-            embed.add_field(name=f"{teamTwo[i].playerName}", value=f"\n{int(teamOnePlayerStats[i].winratio)}%  Rnk:{int(teamTwo[i].Rank_Stat)}", inline=True)
+            embed.add_field(name=f"{teamTwo[i].playerName}", value=f"\n W/L:{int(teamTwoPlayerStats[i].winratio)}%  Rnk:{int(teamTwo[i].Rank_Stat)}", inline=True)
 
         embed.set_footer(text=f"{players[0].matchId}", icon_url="")
         return embed
