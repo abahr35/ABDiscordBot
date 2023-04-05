@@ -10,6 +10,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+    #TODO
+class merge(pyrez.Player, pyrez.LiveMatch):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 
 class embedInfo:
     def __init__(self):
@@ -48,7 +54,7 @@ def main():
     devID = int(os.getenv("DEV_ID"))
     key = os.getenv("AUTH_KEY")
     wow = SmiteTracker(devID, key)
-    name = "rexsi"
+    name = "yanarossy"
 
     players = wow.getLiveMatch(name)
 
@@ -72,6 +78,7 @@ def main():
 
     print(len(teamOne))
     print(len(teamTwo))
+    print(type(teamOne[0]))
 
     for i in range(len(teamOne)):
         print("Team 1: \n", teamOne[i])

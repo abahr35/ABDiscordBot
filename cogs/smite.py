@@ -8,6 +8,15 @@ from smite_utilities import SmiteTracker
 
 class smite(commands.Cog):
 
+    #TODO
+    # - edit msgs
+    # - emojis
+    # - figure out why its 0% W/L
+    # - no player found when using trackme
+    # - streaming breaks loop
+    # - find a better way for storing player data
+    #
+
     def __init__(self, bot):
         self.bot = bot
         self.id = int(os.getenv("DEV_ID"))
