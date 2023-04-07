@@ -9,7 +9,7 @@ from typing import Optional, Literal
 dotenv.load_dotenv()
 token = str(os.getenv("DISCORD_TOKEN"))
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="!", case_insensitive=True, intents=intents, debug_guilds=[821514908327608330, 473249208699322389])
+bot = commands.Bot(command_prefix="!", case_insensitive=True, intents=intents, debug_guilds=[821514908327608330, 473249208699322389, 959898607841075210])
 
 
 # load cogs
