@@ -8,95 +8,32 @@ import pyrez.enumerations
 import pyrez.models
 import pyrez.api
 
+
 class CompletePlayer:
     def __init__(self, PlayerStats: pyrez.models.Smite.Player, LiveMatchObject):
         self.playerStats = PlayerStats
         self.liveMatchObject = LiveMatchObject
 
+
 class smite(commands.Cog):
 
-    #TODO
+    # TODO
     # - edit msgs
     # - emojis
     # - figure out why its 0% W/L
     # - no player found when using trackme
     # - streaming breaks loop
-    # - find a better way for storing player data
-    # - emojis
 
     def __init__(self, bot):
         self.bot = bot
         self.id = int(os.getenv("DEV_ID"))
         self.key = os.getenv("AUTH_KEY")
         self.Smite = SmiteTracker(self.id, self.key)
-        self.emojis = []
+        self.emojis = {}
         self.trackedName = None
         self.trackedGuild = None
         self.respondChannel = None
         self.playerName = None
-
-    def createdMatchEmbed(self, ign):
-        # create exception catch for no live match
-        players = self.Smite.getLiveMatch(ign)
-
-        embed = discord.Embed(
-            title=f"Query for Live Match:{players[0].matchId}",
-            color=discord.Colour.dark_orange()
-        )
-
-        team1 = []
-        team2 = []
-
-        for i in range(len(players)):
-            if players[i].taskForce == 1:
-                if players[i].playerName == "":
-                    players[i].playerName = "not found"
-                    team1.append(players[i])
-                else:
-                    team1.append(players[i])
-
-            elif players[i].taskForce == 2:
-                if players[i].playerName == "":
-                    players[i].playerName = "not found"
-                    team2.append(players[i])
-                else:
-                    team2.append(players[i])
-            else:
-                print("not added")
-
-        if len(team1) == len(team2):
-
-            for i in range(len(team1)):
-                embed.add_field(name=f"Name: {team1[i].playerName}", value=f"", inline=True)
-                embed.add_field(name=f"God: {team1[i].godName}", value=f"", inline=True)
-                embed.add_field(name=f"Account Level: {team1[i].accountLevel}", value=f"", inline=True)
-
-            for i in range(len(team2)):
-                embed.add_field(name=f"Name: {team2[i].playerName}", value="", inline=True)
-                embed.add_field(name=f"God: {team2[i].godName}", value="", inline=True)
-                embed.add_field(name=f"Account Level: {team2[i].accountLevel}", value="", inline=True)
-
-        #             Ignoring
-        #             exception in on_presence_update
-        #             Traceback(most
-        #             recent
-        #             call
-        #             last):
-        #             File
-        #             "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\discord\client.py", line
-        #             378, in _run_event
-        #             await coro(*args, **kwargs)
-        #         File
-        #         "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line
-        #         129, in on_presence_update
-        #         if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
-        #
-        # TypeError: argument
-        # of
-        # type
-        # 'NoneType' is not iterable
-
-        return embed
 
     def createCompleteStats(self, InGameName) -> list[CompletePlayer]:
         match = self.Smite.getLiveMatch(InGameName)
@@ -114,88 +51,17 @@ class smite(commands.Cog):
 
         return completeStats
 
-    def tempCreateEmbed(self, ign):
-        players = self.Smite.getLiveMatch(ign)
-
-        gametype = players[0].getMapName()
+    def createEndOfMatchEmbed(self, ign):
+        match = self.Smite.getMatch(ign)
+        gameType = match[0].getMapName()
         embed = discord.Embed(colour=0x00b0f4, timestamp=datetime.now())
-        embed.set_author(name=f"{gametype}")
-
-        teamOne, teamTwo, teamOnePlayerStats, teamTwoPlayerStats = [], [], [], []
-
-        for player in players:
-            (teamOne, teamTwo)[player.taskForce == 1].append(player)  # if taskforce == 1 append teamOne else team 2
-            if player.playerName == "":
-                player.playerName = "~~Hidden Profile~~"
-        for player in teamOne:
-            if player.playerName != "~~Hidden Profile~~":
-                teamOnePlayerStats.append(self.Smite.getPlayerStats(player.playerName))
-            else:
-                teamOnePlayerStats.append(pyrez.Player)
-        for player in teamTwo:
-            if player.playerName != "~~Hidden Profile~~":
-                teamTwoPlayerStats.append(self.Smite.getPlayerStats(player.playerName))
-            else:
-                teamTwoPlayerStats.append(pyrez.Player)
-
-        for i in range(len(teamOnePlayerStats)):
-            try:
-                _ = teamOnePlayerStats[i].winratio
-            except AttributeError:
-                teamOnePlayerStats[i].winratio = 0
-
-            try:
-                _ = teamTwoPlayerStats[i].winratio
-            except AttributeError:
-                teamTwoPlayerStats[i].winratio = 0
-
-        for i in range(len(teamOne)):
-
-            embed.add_field(name=f"{teamOne[i].playerName}", value=f"\n W/L:{int(teamOnePlayerStats[i].winratio)}%  Rnk:{int(teamOne[i].Rank_Stat)}", inline=True)
-            embed.add_field(name=f"{teamOne[i].accountLevel:3d} || {teamTwo[i].accountLevel:3d}", value="", inline=True)
-            embed.add_field(name=f"{teamTwo[i].playerName}", value=f"\n W/L:{int(teamTwoPlayerStats[i].winratio)}%  Rnk:{int(teamTwo[i].Rank_Stat)}", inline=True)
-
-        embed.set_footer(text=f"{players[0].matchId}", icon_url="")
-        return embed
-
-    def tempCreateEmbedEmoji(self, ign):
-
-#
-#         Traceback (most recent call last):
-#   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\discord\client.py", line 378, in _run_event
-#     await coro(*args, **kwargs)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 293, in on_presence_update
-#     embed = self.tempCreateEmbedEmoji(self.playerName)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 163, in tempCreateEmbedEmoji
-#     completeStats = self.createCompleteStats(ign)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 108, in createCompleteStats
-#     stats.append(self.Smite.getPlayerStats(str(player.playerName)))
-#   File "C:\ProgrammingRepo\Python\DiscordBot\smite_utilities.py", line 27, in getPlayerStats
-#     return self.smite.getPlayer(inGameName)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\SmiteAPI.py", line 191, in getPlayer
-#     _ = BaseSmitePaladins.getPlayer(self, player, portalId)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 558, in getPlayer
-#     _ = self.makeRequest("getplayer", [player, portalId] if portalId else [player])
-#   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 211, in makeRequest
-#     self._checkErrorMsg(hasError.errorMsg)
-#   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 147, in _checkErrorMsg
-#     raise PrivatePlayer(errorMsg)
-# pyrez.exceptions.PrivatePlayer.PrivatePlayer: Player Privacy Flag set for: playerIdStr=WinterHuntsman; playerIdType=1; playerId=9745195
-#
-
-        completeStats = self.createCompleteStats(ign)
-
-        gametype = completeStats[0].liveMatchObject.getMapName()
-        embed = discord.Embed(colour=discord.Colour.blurple(), timestamp=datetime.now())
-        embed.set_author(name=f"{gametype}")
+        embed.set_author(name=f"{gameType}")
 
         teamOne, teamTwo = [], []
 
-        for player in completeStats:
-            (teamOne, teamTwo)[player.liveMatchObject.taskForce == 1].append(player)  # if taskforce == 1 append teamOne else team 2
-            if player.playerStats is None:
-                player.playerStats = pyrez.models.Player
-
+        for player in match:
+            (teamOne, teamTwo)[player.taskForce == 1].append(
+                player)  # if taskforce == 1 append teamOne else team 2
 
         emoji1, emoji2 = [], []
         for i in range(len(teamOne)):
@@ -209,32 +75,87 @@ class smite(commands.Cog):
                     emoji2.append(self.emojis[y])
                     break
 
-            try:
-                embed.add_field(name=f"{emoji1[i]} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {teamOne[i].playerStats.winratio}%", inline=True)
-            except AttributeError:
-                embed.add_field(name=f"{emoji1[i]} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {0}%", inline=True)
+        for i in range(len(teamOne)):
+            embed.add_field(name=f"{emoji1[i]} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {teamOne[i].playerStats.winratio}%", inline=True)
 
-            embed.add_field(name=f"{teamOne[i].liveMatchObject.accountLevel:3d} <:level:1093664230928023603> {teamTwo[i].liveMatchObject.accountLevel:3d}", value="", inline=True)
+    def createLiveMatchEmbed(self, ign):
+
+        #
+        #         Traceback (most recent call last):
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\discord\client.py", line 378, in _run_event
+        #     await coro(*args, **kwargs)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 293, in on_presence_update
+        #     embed = self.tempCreateEmbedEmoji(self.playerName)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 163, in tempCreateEmbedEmoji
+        #     completeStats = self.createCompleteStats(ign)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\cogs\smite.py", line 108, in createCompleteStats
+        #     stats.append(self.Smite.getPlayerStats(str(player.playerName)))
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\smite_utilities.py", line 27, in getPlayerStats
+        #     return self.smite.getPlayer(inGameName)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\SmiteAPI.py", line 191, in getPlayer
+        #     _ = BaseSmitePaladins.getPlayer(self, player, portalId)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 558, in getPlayer
+        #     _ = self.makeRequest("getplayer", [player, portalId] if portalId else [player])
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 211, in makeRequest
+        #     self._checkErrorMsg(hasError.errorMsg)
+        #   File "C:\ProgrammingRepo\Python\DiscordBot\venv\lib\site-packages\pyrez\api\API.py", line 147, in _checkErrorMsg
+        #     raise PrivatePlayer(errorMsg)
+        # pyrez.exceptions.PrivatePlayer.PrivatePlayer: Player Privacy Flag set for: playerIdStr=WinterHuntsman; playerIdType=1; playerId=9745195
+        #
+
+        completeStats = self.createCompleteStats(ign)
+
+        gametype = completeStats[0].liveMatchObject.getMapName()
+        embed = discord.Embed(colour=discord.Colour.blurple(), timestamp=datetime.now())
+        embed.set_author(name=f"{gametype}")
+
+        teamOne, teamTwo = [], []
+
+        for player in completeStats:
+            (teamOne, teamTwo)[player.liveMatchObject.taskForce == 1].append(
+                player)  # if taskforce == 1 append teamOne else team 2
+            if player.playerStats is None:
+                #todo issue with Private Profile
+                player.liveMatchObject.playerName = "~~Hidden Profile~~"
+                player.playerStats = pyrez.models.PlayerPS(winratio=0)
+
+        for i in range(len(teamOne)):
+            ej1 = self.emojis[str(teamOne[i].liveMatchObject.godName).replace(" ", "")]
             try:
-                embed.add_field(name=f"{emoji2[i]} {teamTwo[i].liveMatchObject.playerName}", value=f"\n W/L: {teamTwo[i].playerStats.winratio}%", inline=True)
+                embed.add_field(name=f"{ej1} {teamOne[i].liveMatchObject.playerName}",
+                                value=f"\n W/L: {teamOne[i].playerStats.winratio}%", inline=True)
             except AttributeError:
-                embed.add_field(name=f"{emoji2[i]} {teamTwo[i].liveMatchObject.playerName}", value=f"\n W/L: {0}%", inline=True)
+                embed.add_field(name=f"{ej1} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {0}%",
+                                inline=True)
+
+            embed.add_field(
+                name=f"{teamOne[i].liveMatchObject.accountLevel:3d} <:level:1093664230928023603> {teamTwo[i].liveMatchObject.accountLevel:3d}",
+                value="", inline=True)
+
+            ej2 = self.emojis[str(teamTwo[i].liveMatchObject.godName).replace(" ", "")]
+            try:
+                embed.add_field(name=f"{ej2} {teamTwo[i].liveMatchObject.playerName}",
+                                value=f"\n W/L: {teamTwo[i].playerStats.winratio}%", inline=True)
+            except AttributeError:
+                embed.add_field(name=f"{ej2} {teamTwo[i].liveMatchObject.playerName}", value=f"\n W/L: {0}%",
+                                inline=True)
 
         embed.set_footer(text=f"{completeStats[0].liveMatchObject.matchId}", icon_url="")
 
-        return embed
+        return embed, completeStats[0].liveMatchObject.matchId
 
     @commands.Cog.listener()
     async def on_ready(self):
-        guilds = [await self.bot.fetch_guild(959898607841075210), await self.bot.fetch_guild(821514908327608330), await self.bot.fetch_guild(1093656432278245558)]
+        guilds = [await self.bot.fetch_guild(959898607841075210), await self.bot.fetch_guild(821514908327608330),
+                  await self.bot.fetch_guild(1093656432278245558)]
         for guild in guilds:
             for emoji in guild.emojis:
-                self.emojis.append(emoji)
+                self.emojis[str(emoji.name)] = emoji
         print("Emojis Loaded")
         print("Smite Cog Ready")
 
-    @discord.slash_command(name="matchtest", description="Query stats for a test match")
-    async def matchtest(self, ctx, ign):
+    @discord.slash_command(name="livematchtest", description="Query stats for a test match")
+    async def livematchtest(self, ctx, ign):
         """
         {
           "Account_Gods_Played": 27,
@@ -260,8 +181,9 @@ class smite(commands.Cog):
           "tierWins": 0
         }
         """
-        embed = self.tempCreateEmbedEmoji(ign)
-        await ctx.respond(embed=embed)
+        embed = self.createLiveMatchEmbed(ign)
+        self.respondChannel = ctx.channel
+        await self.respondChannel.send(embed=embed[0])
 
     @discord.slash_command(name="stats", description="Query stats for a specific player")
     async def stats(self, ctx, ign):
@@ -297,6 +219,8 @@ class smite(commands.Cog):
     async def on_presence_update(self, before, after):  # for live tracking of smite game
         beforeSmiteStatus = None
         afterSmiteStatus = None
+        msg = None
+
         for activity in before.activities:
             if activity.name == "SMITE":
                 beforeSmiteStatus = activity.state
@@ -305,17 +229,31 @@ class smite(commands.Cog):
             if activity.name == "SMITE":
                 afterSmiteStatus = activity.state
 
-        # https://github.com/iforvard/SmiteLiveMatchCheck/blob/master/SLMChek.py
         if before.id == self.trackedName and before.guild.id == self.trackedGuild:
             print(
                 f"successfully seen {before.id} change presence from {beforeSmiteStatus} to {afterSmiteStatus} in {before.guild.id}")
-            if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
-                embed = self.tempCreateEmbedEmoji(self.playerName)
-                await self.respondChannel.send(embed=embed)
+            if msg is None:
+                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
+                    embed = self.createLiveMatchEmbed(self.playerName)
+                    msg = await self.respondChannel.send(embed=embed[0])
 
-            if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Lobby":
-                embed = self.tempCreateEmbedEmoji(self.playerName)
-                await self.respondChannel.send(embed=embed)
+                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Lobby":
+                    embed = self.createLiveMatchEmbed(self.playerName)
+                    msg = await self.respondChannel.send(embed=embed[0])
+            else:
+                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
+                    embed = self.createLiveMatchEmbed(self.playerName)
+                    msg.edit(await self.respondChannel.send(embed=embed[0]))
+
+                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Lobby":
+                    embed = self.createLiveMatchEmbed(self.playerName)
+                    msg.edit(await self.respondChannel.send(embed=embed[0]))
+
+                if "Playing" in beforeSmiteStatus and afterSmiteStatus == "In Lobby":
+                    pass
+                    # matchId = embed[1]
+                    # updatedEmbed = createEndOfMatchEmbed()
+                    # msg.edit(embed=updatedEmbed)
 
     @commands.slash_command(name="trackme", description="Query live match")
     async def trackme(self, ctx, playername):  # this is called when a member joins the server
