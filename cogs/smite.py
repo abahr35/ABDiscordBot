@@ -9,10 +9,10 @@ import pyrez.models
 import pyrez.api
 
 
-class CompletePlayer:
-    def __init__(self, PlayerStats: pyrez.models.Smite.Player, LiveMatchObject):
-        self.playerStats = PlayerStats
-        self.liveMatchObject = LiveMatchObject
+class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch):
+    def __init__(self, **kwargs):
+        pyrez.models.Smite.Player.__init__(self, **kwargs)
+        pyrez.models.LiveMatch.__init__(self, **kwargs)
 
 
 class smite(commands.Cog):
@@ -30,30 +30,32 @@ class smite(commands.Cog):
         self.key = os.getenv("AUTH_KEY")
         self.Smite = SmiteTracker(self.id, self.key)
         self.emojis = {}
-        self.trackedName = None
-        self.trackedGuild = None
-        self.respondChannel = None
-        self.playerName = None
+        self.tracked_users = {}
+
+    def sortByParty(self, playerList: list[CompletePlayer]):
+        return playerList.sort(key=lambda player: player.PartyId)
 
     def createCompleteStats(self, InGameName) -> list[CompletePlayer]:
-        match = self.Smite.getLiveMatch(InGameName)
-        stats = []
-        completeStats = []
-
+        compiledMatch = []
+        match = self.getRecentMatch(InGameName)
         for player in match:
-            if player.playerName != "":
-                stats.append(self.Smite.getPlayerStats(str(player.playerName)))
-            else:
-                stats.append(None)
+            match_dict = player.__kwargs__
+            try:
+                player_dict = self.smite.getPlayer(player.playerId).__kwargs__
+            except pyrez.exceptions.PlayerNotFound:
+                player_dict = pyrez.models.Smite.Player
 
-        for i in range(len(match)):
-            completeStats.append(CompletePlayer(stats[i], match[i]))
+            combined_data = {}
+            combined_data.update(match_dict)
+            combined_data.update(player_dict)
 
-        return completeStats
+            compiledMatch.append(CompletePlayer(**combined_data))
 
-    def createEndOfMatchEmbed(self, ign):
-        match = self.Smite.getMatch(ign)
-        gameType = match[0].getMapName()
+        return compiledMatch
+
+    def createEndOfMatchEmbed(self, matchId: int):
+        match = self.Smite.getMatchByID(matchId)
+        gameType = self.Smite.getMatchType(match[0].matchQueueId)
         embed = discord.Embed(colour=0x00b0f4, timestamp=datetime.now())
         embed.set_author(name=f"{gameType}")
 
@@ -63,21 +65,27 @@ class smite(commands.Cog):
             (teamOne, teamTwo)[player.taskForce == 1].append(
                 player)  # if taskforce == 1 append teamOne else team 2
 
-        emoji1, emoji2 = [], []
+        godEmojiTeam1, godEmojiTeam2 = [], []
         for i in range(len(teamOne)):
             for y in range(len(self.emojis)):
                 if int(self.emojis[y].name) == int(teamOne[i].liveMatchObject.godId):
-                    emoji1.append(self.emojis[y])
+                    godEmojiTeam1.append(self.emojis[y])
                     break
 
             for y in range(len(self.emojis)):
                 if int(self.emojis[y].name) == int(teamTwo[i].liveMatchObject.godId):
-                    emoji2.append(self.emojis[y])
+                    godEmojiTeam2.append(self.emojis[y])
                     break
 
         for i in range(len(teamOne)):
-            embed.add_field(name=f"{emoji1[i]} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {teamOne[i].playerStats.winratio}%", inline=True)
+            embed.add_field(name=f"{godEmojiTeam1[i]} {teamOne[i].liveMatchObject.playerName}", value=f"\n W/L: {teamOne[i].playerStats.winratio}%", inline=True)
 
+            #todo party
+
+
+    def testCreateLiveMatchEmbed(self, ign):
+        pass
+    #     todo test CompletePlayer
     def createLiveMatchEmbed(self, ign):
 
         #
@@ -105,19 +113,20 @@ class smite(commands.Cog):
 
         completeStats = self.createCompleteStats(ign)
 
-        gametype = completeStats[0].liveMatchObject.getMapName()
+        gametype = self.smite.getMatchType(completeStats[0].liveMatchObject.Queue)
+        #completeStats[0].liveMatchObject.getMapName()
         embed = discord.Embed(colour=discord.Colour.blurple(), timestamp=datetime.now())
         embed.set_author(name=f"{gametype}")
 
         teamOne, teamTwo = [], []
 
-        for player in completeStats:
-            (teamOne, teamTwo)[player.liveMatchObject.taskForce == 1].append(
-                player)  # if taskforce == 1 append teamOne else team 2
-            if player.playerStats is None:
-                #todo issue with Private Profile
-                player.liveMatchObject.playerName = "~~Hidden Profile~~"
-                player.playerStats = pyrez.models.PlayerPS(winratio=0)
+        # for player in completeStats:
+        #     (teamOne, teamTwo)[player.liveMatchObject.taskForce == 1].append(
+        #         player)  # if taskforce == 1 append teamOne else team 2
+        #     if player.playerStats is None:
+        #         #todo issue with Private Profile
+        #         player.liveMatchObject.playerName = "~~Hidden Profile~~"
+        #         player.playerStats = pyrez.models.PlayerPS(winratio=0)
 
         for i in range(len(teamOne)):
             ej1 = self.emojis[str(teamOne[i].liveMatchObject.godName).replace(" ", "")]
@@ -182,8 +191,8 @@ class smite(commands.Cog):
         }
         """
         embed = self.createLiveMatchEmbed(ign)
-        self.respondChannel = ctx.channel
-        await self.respondChannel.send(embed=embed[0])
+        respondChannel = ctx.channel
+        await respondChannel.send(embed=embed[0])
 
     @discord.slash_command(name="stats", description="Query stats for a specific player")
     async def stats(self, ctx, ign):
@@ -217,39 +226,45 @@ class smite(commands.Cog):
 
     @commands.Cog.listener()
     async def on_presence_update(self, before, after):  # for live tracking of smite game
-        beforeSmiteStatus = None
-        afterSmiteStatus = None
+        before_smite_status = None
+        after_smite_status = None
         msg = None
+        acceptable_presences = ["Playing", "Streaming"]
 
         for activity in before.activities:
             if activity.name == "SMITE":
-                beforeSmiteStatus = activity.state
+                before_smite_status = activity.state
 
         for activity in after.activities:
             if activity.name == "SMITE":
-                afterSmiteStatus = activity.state
+                after_smite_status = activity.state
 
-        if before.id == self.trackedName and before.guild.id == self.trackedGuild:
-            print(
-                f"successfully seen {before.id} change presence from {beforeSmiteStatus} to {afterSmiteStatus} in {before.guild.id}")
+        user_id = str(before.id)
+        if user_id in self.tracked_users:
+            tracked_info = self.tracked_users[user_id]
+            tracked_guild_id = tracked_info["guild"]
+            tracked_channel = tracked_info["channel"]
+            player_name = tracked_info["player"]
+
+            print(f"successfully seen {user_id} change presence from {before_smite_status} to {after_smite_status} in {tracked_guild_id}")
             if msg is None:
-                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
-                    embed = self.createLiveMatchEmbed(self.playerName)
-                    msg = await self.respondChannel.send(embed=embed[0])
+                if acceptable_presences in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createLiveMatchEmbed(player_name)
+                    msg = await tracked_channel.send(embed=embed[0])
 
-                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Lobby":
-                    embed = self.createLiveMatchEmbed(self.playerName)
-                    msg = await self.respondChannel.send(embed=embed[0])
+                if acceptable_presences in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createLiveMatchEmbed(player_name)
+                    msg = await tracked_channel.send(embed=embed[0])
             else:
-                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Queue":
-                    embed = self.createLiveMatchEmbed(self.playerName)
-                    msg.edit(await self.respondChannel.send(embed=embed[0]))
+                if acceptable_presences in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createLiveMatchEmbed(player_name)
+                    msg.edit(await tracked_channel.send(embed=embed[0]))
 
-                if "Playing" in afterSmiteStatus and beforeSmiteStatus == "In Lobby":
-                    embed = self.createLiveMatchEmbed(self.playerName)
-                    msg.edit(await self.respondChannel.send(embed=embed[0]))
+                if acceptable_presences in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createLiveMatchEmbed(player_name)
+                    msg.edit(await tracked_channel.send(embed=embed[0]))
 
-                if "Playing" in beforeSmiteStatus and afterSmiteStatus == "In Lobby":
+                if acceptablePresences in beforeSmiteStatus and afterSmiteStatus == "In Lobby":
                     pass
                     # matchId = embed[1]
                     # updatedEmbed = createEndOfMatchEmbed()
@@ -257,11 +272,11 @@ class smite(commands.Cog):
 
     @commands.slash_command(name="trackme", description="Query live match")
     async def trackme(self, ctx, playername):  # this is called when a member joins the server
-        self.trackedName = ctx.author.id
-        self.trackedGuild = ctx.guild.id
-        self.respondChannel = ctx.channel
-        self.playerName = playername
-        print("set tracker:", self.trackedName, self.trackedGuild)
+        user_id = str(ctx.author.id)
+        guild_id = str(ctx.guild.id)
+        tracked_info = {"guild": guild_id, "channel": ctx.channel, "player": playername}
+        self.tracked_users[user_id] = tracked_info
+        print("set tracker:", user_id, guild_id)
         await ctx.respond("Started Tracking...")
 
 
