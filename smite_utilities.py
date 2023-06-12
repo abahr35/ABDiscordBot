@@ -1,4 +1,5 @@
 import os
+
 import pyrez
 import pyrez.api
 import pyrez.enumerations
@@ -6,11 +7,8 @@ import pyrez.models
 import requests
 from dotenv import load_dotenv
 from pyrez.api import SmiteAPI
-import json
-import pprint
 
 load_dotenv()
-
 
 class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch):
     # PlayerStats: pyrez.models.Smite.Player, LiveMatchObject
@@ -18,27 +16,78 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch):
     def __init__(self, **kwargs):
         pyrez.models.Smite.Player.__init__(self, **kwargs)
         pyrez.models.LiveMatch.__init__(self, **kwargs)
+        if self.hidden_profile:
+            self.setPlayerName("~~Hidden Profile~~")
         self.partyNumber = 0
+        self.emoji = None
 
-    def setParty(self, id: int):
-        self.partyNumber = id
+    def setPlayerName(self, name: str):
+        self.playerName = name
+
+    def setParty(self, partyID: int):
+        self.partyNumber = partyID
 
     def getParty(self):
         return self.partyNumber
+
+    def setEmoji(self, emoji):
+        self.emoji = emoji
+
+    def getEmoji(self):
+        return self.emoji
+
+    def getKDA(self):
+        return f"{self.Kills_Player}/{self.Deaths}/{self.Assists}"
+
+    def getPortal(self):
+        try:
+            return pyrez.enumerations.PortalId(self.portalId).name
+        except ValueError:
+            return "Mystery Console"
 
 
 class SmiteTracker:
     def __init__(self, devID: int, authKey: str):
         self.smite = SmiteAPI(devID, authKey)
 
-    def getMatchType(self, gameModeId) -> str:
-        acceptableIds = [426, 435, 440, 445, 448, 451, 450, 10189, 10193, 10195, 10197]
-        acceptableMds = ["Conquest", "Arena", "Siege", "Assault", "Joust", "Ranked Conquest", "Ranked Joust", "Slash",
-                         "Noob Conquest", "Noob Arena", "Noob Joust"]
-        matchDictionary = dict(zip(acceptableIds, acceptableMds))
+    def downloadItems(self):
+        # downloadItems for emojis
+        item_icons = self.smite.getItems()
+        count = 0
+        for item in item_icons:
+            icon_url = item.itemIconURL
+        response = requests.get(icon_url)
+        name1 = item.deviceName.replace(" ", "")
+        name1 = name1.replace("*", "")
+        name1 = name1.replace("'", "")
+        with open(f"items/{name1}.png", "wb") as file:
+            file.write(response.content)
+        count += 1
+        print(f"wrote {name1}.png {count}")
+        print("finished")
+
+    def getDamage(self, playerList):
+        totalDamage = 0
+        for player in playerList:
+            totalDamage += player.Damage_Player
+        return totalDamage
+
+    def getKDA(self, playerList):
+        teamKills = 0
+        teamDeaths = 0
+        teamAssists = 0
+        for player in playerList:
+            teamKills += player.Kills_Player
+            teamDeaths += player.Deaths
+            teamAssists += player.Assists
+        return f"{teamKills}/{teamDeaths}/{teamAssists}"
+
+    def getMatchType(self, gameModeId):
+        if gameModeId is None:
+            raise TypeError
         try:
-            return matchDictionary[gameModeId]
-        except KeyError:
+            return pyrez.enumerations.QueueSmite(gameModeId).name
+        except ValueError:
             return "Mystery Game"
 
     def getPlayerStats(self, inGameName: str):
@@ -47,7 +96,7 @@ class SmiteTracker:
         except pyrez.PlayerNotFound:
             return pyrez.models.Player
 
-    def generateParty(self, players):
+    def generateParty(self, players) -> tuple[list[CompletePlayer], list[CompletePlayer]]:
         party_map = {}  # Dictionary to map party IDs to party numbers
         party_counter = 0  # Counter to track the current party number
 
@@ -65,7 +114,7 @@ class SmiteTracker:
 
             player.setParty(party_number)
 
-            print(f"partyID: {party_id} -> partyNumber: {party_number}")
+            # print(f"partyID: {party_id} -> partyNumber: {party_number}")
 
         return self.sortTeams(players)
 
@@ -81,7 +130,10 @@ class SmiteTracker:
         for player in match:
             match_dict = player.__kwargs__
             try:
+                if player.playerName == "":
+                    player.playerName = "~~Hidden Profile~~"
                 player_dict = self.smite.getPlayer(player.playerId).__kwargs__
+
             except pyrez.exceptions.PlayerNotFound:
                 player_dict = pyrez.models.Smite.Player()
 
@@ -125,19 +177,32 @@ def main():
     wow = SmiteTracker(devID, key)
     name = "JodiHighRoll3r"
 
-    match = wow.createCompleteStats("jodihighroll3r")
+    match = wow.createCompleteStats(name)
 
     sortedMatch = wow.generateParty(match)
 
-    print("T1")
-    for player in sortedMatch[0]:
-        print(player.getParty())
-        print(player.PartyId)
+    print(sortedMatch[0][0])
 
-    print("T2")
-    for player in sortedMatch[1]:
-        print(player.getParty())
-        print(player.PartyId)
+    # for player in sortedMatch[0]:
+    #     print(player.playerName)
+
+    # print("T1")
+    # for player in sortedMatch[0]:
+    #     print()
+    #     print(player.playerName)
+    #     print(player.getParty())
+    #     print(player.godName)
+    #     print(player.godId)
+    #     print(player.PartyId)
+    #
+    # print("\nT2")
+    # for player in sortedMatch[1]:
+    #     print()
+    #     print(player.playerName)
+    #     print(player.getParty())
+    #     print(player.godName)
+    #     print(player.godId)
+    #     print(player.PartyId)
 
 
 if __name__ == "__main__":
