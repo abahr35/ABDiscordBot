@@ -14,11 +14,12 @@ import pyrez.api
 class smite(commands.Cog):
 
     # TODO
+    # - redo stats
     # - edit msgs
-    # - emojis
     # - figure out why its 0% W/L
-    # - no player found when using trackme
-    # - streaming breaks loop
+    # - throw no player found error when using trackme and change tagline
+    # - make emoji for parties
+    # - implement emojis for items (ugh)
 
     def __init__(self, bot):
         self.bot = bot
@@ -31,7 +32,7 @@ class smite(commands.Cog):
     def sortByParty(self, playerList: list[smite_utilities.CompletePlayer]):
         return playerList.sort(key=lambda player: player.PartyId)
 
-    def createCompleteStats(self, InGameName) -> list[smite_utilities.CompletePlayer]:
+    def compileTeamCompleteStats(self, InGameName) -> list[smite_utilities.CompletePlayer]:
         compiledMatch = []
         match = self.getRecentMatch(InGameName)
         for player in match:
@@ -51,78 +52,83 @@ class smite(commands.Cog):
 
     def createEndOfMatchEmbed(self, ign: str):
         match = self.Smite.createCompleteStats(ign)
-        sortedMatch = self.Smite.generateParty(match)
-        gameType = self.Smite.getMatchType(sortedMatch[0][0].match_queue_id)
-        gameLength = sortedMatch[0][0].Time_In_Match_Seconds/60
+        print(match[0])
+        sortedMatch = match
+        gameType = self.Smite.getMatchType(sortedMatch[0].CompletePlayerList[0].match_queue_id)
+        gameLength = sortedMatch[0].CompletePlayerList[0].Time_In_Match_Seconds / 60
 
         embed = discord.Embed(colour=discord.Colour.blurple(), timestamp=datetime.now())
         embed.set_author(name=f"{gameType} | {int(gameLength)} Minutes")
 
         # set god emojis
-        for player in sortedMatch[0]:
+        for player in sortedMatch[0].CompletePlayerList:
             player.emoji = self.emojis[str(player.godName).replace(" ", "")]
 
-        for player in sortedMatch[1]:
+        for player in sortedMatch[1].CompletePlayerList:
             player.emoji = self.emojis[str(player.godName).replace(" ", "")]
 
         t1, t2 = sortedMatch[0], sortedMatch[1]
 
-        T1KDA = self.Smite.getKDA(t1)
-        T1AvgDamage = self.Smite.getDamage(t1)
-        T2KDA = self.Smite.getKDA(t2)
-        T2AvgDamage = self.Smite.getDamage(t2)
-
         # create first line
-        if t1[0].Win_Status == "Winner":
-            embed.add_field(name=f":trophy:{t1[0].Win_Status}:trophy:",
-                            value=f"\n:crossed_swords:KDA:{T1KDA}\n:dagger:{T1AvgDamage}", inline=True)
+        if t1.Win_Status == "Winner":
+            embed.add_field(name=f":trophy:{t1.Win_Status}:trophy:",
+                            value=f"\n:crossed_swords:KDA:{t1.kda}\n:dagger:Damage:{t1.totalDamage}", inline=True)
         else:
-            embed.add_field(name=f":red_circle:{t1[0].Win_Status}:red_circle:",
-                            value=f"\n:crossed_swords:KDA:{T1KDA}\n:dagger:{T1AvgDamage}", inline=True)
+            embed.add_field(name=f":red_circle:{t1.Win_Status}:red_circle:",
+                            value=f"\n:crossed_swords:KDA:{t1.kda}\n:dagger:Damage:{t1.totalDamage}", inline=True)
         embed.add_field(name=f"", value=f"\n ", inline=True)
-        embed.add_field(name=f":trophy:{t2[0].Win_Status}:trophy:",
-                        value=f"\n:crossed_swords:KDA:{T2KDA}\n:dagger:{T2AvgDamage}", inline=True)
+        if t2.Win_Status == "Winner":
+            embed.add_field(name=f":trophy:{t2.Win_Status}:trophy:",
+                        value=f"\n:crossed_swords:KDA:{t2.kda}\n:dagger:Damage:{t2.totalDamage}", inline=True)
+        else:
+            embed.add_field(name=f":red_circle:{t2.Win_Status}:red_circle:",
+                            value=f"\n:crossed_swords:KDA:{t2.kda}\n:dagger:Damage:{t2.totalDamage}", inline=True)
 
-        for i in range(len(t1)):
-            embed.add_field(name=f"{t1[i].getEmoji()} {t1[i].playerName}",
-                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t1[i].getKDA()}\n:dagger:Damage:{t1[i].Damage_Player}\n:coin:Gold:{t1[i].Gold_Earned}",
+        for i in range(len(t1.CompletePlayerList)):
+            embed.add_field(name=f"{t1.CompletePlayerList[i].getEmoji()} {t1.CompletePlayerList[i].playerName}",
+                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t1.CompletePlayerList[i].matchKDA}\n:dagger:Damage:{t1.CompletePlayerList[i].Damage_Player}\n:coin:Gold:{t1.CompletePlayerList[i].Gold_Earned}",
                             inline=True)
-            embed.add_field(name=f"{t1[i].accountLevel:3d} <:level:1093664230928023603> {t2[i].accountLevel:3d}",
-                            value=f"\n{t1[i].partyNumber} :black_large_square: {t2[i].partyNumber}", inline=True)
-            embed.add_field(name=f"{t2[i].getEmoji()} {t2[i].playerName}",
-                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t2[i].getKDA()}\n:dagger:Damage:{t2[i].Damage_Player}\n:coin:Gold:{t2[i].Gold_Earned}",
+            embed.add_field(name=f"{t1.CompletePlayerList[i].accountLevel:3d} <:level:1093664230928023603> {t2.CompletePlayerList[i].accountLevel:3d}",
+                            value=f"\n{t1.CompletePlayerList[i].partyNumber} :black_large_square: {t2.CompletePlayerList[i].partyNumber}", inline=True)
+            embed.add_field(name=f"{t2.CompletePlayerList[i].getEmoji()} {t2.CompletePlayerList[i].playerName}",
+                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t2.CompletePlayerList[i].matchKDA}\n:dagger:Damage:{t2.CompletePlayerList[i].Damage_Player}\n:coin:Gold:{t2.CompletePlayerList[i].Gold_Earned}",
                             inline=True)
 
-        embed.set_footer(text=f"{t1[0].matchId}", icon_url="")
+        embed.set_footer(text=f"{t1.Match_Id}", icon_url="")
 
         return embed
 
     def createLiveMatchEmbed(self, ign):
         match = self.Smite.createCompleteStats(ign)
-        sortedMatch = self.Smite.generateParty(match)
-        gameType = self.Smite.getMatchType(sortedMatch[0][0].match_queue_id)
+        sortedMatch = match
+        gameType = self.Smite.getMatchType(sortedMatch[0].CompletePlayerList[0].match_queue_id)
 
         embed = discord.Embed(colour=discord.Colour.blurple(), timestamp=datetime.now())
         embed.set_author(name=f"{gameType} | Live Match")
 
         # set god emojis
-        for player in sortedMatch[0]:
+        for player in sortedMatch[0].CompletePlayerList:
             player.emoji = self.emojis[str(player.godName).replace(" ", "")]
 
-        for player in sortedMatch[1]:
+        for player in sortedMatch[1].CompletePlayerList:
             player.emoji = self.emojis[str(player.godName).replace(" ", "")]
 
         t1, t2 = sortedMatch[0], sortedMatch[1]
 
-        for i in range(len(t1)):
-            embed.add_field(name=f"{t1[i].getEmoji()} {t1[i].playerName}",
-                            value=f"\n:video_game:{t1[i].getPortal()}\n:crossed_swords:W/L:{t1[i].winratio}\n:dagger:Damage:{t1[i]}\n:coin:Gold:{t1[i].Gold_Earned}",
+        for i in range(len(t1.CompletePlayerList)):
+            embed.add_field(name=f"{t1.CompletePlayerList[i].getEmoji()} {t1.CompletePlayerList[i].playerName}",
+                            value=f"\n{t1.CompletePlayerList[i].matchKDA()}\n:crossed_swords:KDA:{t1.CompletePlayerList[i].matchKDA}\n:dagger:Damage:{t1.CompletePlayerList[i].Damage_Player}\n:coin:Gold:{t1.CompletePlayerList[i].Gold_Earned}",
                             inline=True)
-            embed.add_field(name=f"{t1[i].accountLevel:3d} <:level:1093664230928023603> {t2[i].accountLevel:3d}",
-                            value=f"\n{t1[i].partyNumber} :black_large_square: {t2[i].partyNumber}", inline=True)
-            embed.add_field(name=f"{t2[i].getEmoji()} {t2[i].playerName}",
-                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t2[i].getKDA()}\n:dagger:Damage:{t2[i].Damage_Player}\n:coin:Gold:{t2[i].Gold_Earned}",
+            embed.add_field(name=f"{t1.CompletePlayerList[i].accountLevel:3d} <:level:1093664230928023603> {t2.CompletePlayerList[i].accountLevel:3d}",
+                            value=f"\n{t1.CompletePlayerList[i].partyNumber} :black_large_square: {t2.CompletePlayerList[i].partyNumber}", inline=True)
+            embed.add_field(name=f"{t2.CompletePlayerList[i].getEmoji()} {t2.CompletePlayerList[i].playerName}",
+                            value=f"\n--items_placeholder--\n:crossed_swords:KDA:{t2.CompletePlayerList[i].matchKDA()}\n:dagger:Damage:{t2.CompletePlayerList[i].Damage_Player}\n:coin:Gold:{t2.CompletePlayerList[i].Gold_Earned}",
                             inline=True)
+
+        embed.set_footer(text=f"{t1.Match_Id}", icon_url="")
+
+        return embed
+
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -137,10 +143,9 @@ class smite(commands.Cog):
     @discord.slash_command(name="livematchtest", description="Query stats for a test match")
     async def livematchtest(self, ctx, ign):
         embed = self.createEndOfMatchEmbed(ign)
-        print(type(ctx))
         tracked_channel = ctx.channel
-        await ctx.respond("Match:")
-        msg = await tracked_channel.send(embed=embed)
+        msg = await ctx.respond("Match:")
+        await tracked_channel.send(embed=embed)
 
     @discord.slash_command(name="stats", description="Query stats for a specific player")
     async def stats(self, ctx, ign):
@@ -197,30 +202,44 @@ class smite(commands.Cog):
 
             print(
                 f"successfully seen {user_id} change presence from {before_smite_status} to {after_smite_status} in {tracked_guild_id}")
-
             if msg is None:
-                if acceptable_prefixes[0] or acceptable_prefixes[
-                    1] in after_smite_status and before_smite_status == "In Queue":  # "In Queue -> Playing/Streaming Smite"
-                    embed = self.createLiveMatchEmbed(player_name)
+                # todo play test
+                if acceptable_prefixes[0] in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createLiveMatchEmbed(player_name)  # "In Queue -> Playing Smite"
                     msg = await tracked_channel.send(embed=embed)
 
-                if acceptable_prefixes[0] or acceptable_prefixes[
-                    1] in after_smite_status and before_smite_status == "In Lobby":  # "In Lobby -> Playing/Streaming Smite"
-                    embed = self.createLiveMatchEmbed(player_name)
+                if acceptable_prefixes[1] in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createLiveMatchEmbed(player_name)  # "In Queue -> Streaming Smite"
                     msg = await tracked_channel.send(embed=embed)
+
+                if acceptable_prefixes[0] in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createLiveMatchEmbed(player_name)  # "In Lobby -> Playing Smite"
+                    msg = await tracked_channel.send(embed=embed)
+
+                if acceptable_prefixes[1] in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createLiveMatchEmbed(player_name)  # "In Lobby -> Streaming Smite"
+                    msg = await tracked_channel.send(embed=embed)
+
             else:
-                if acceptable_prefixes[0] or acceptable_prefixes[
-                    1] in after_smite_status and before_smite_status == "In Queue":  # "In Queue -> Playing/Streaming Smite"
-                    embed = self.createEndOfMatchEmbed(player_name)
-                    await msg.edit(tracked_channel.send(embed=embed))
+
+                if acceptable_prefixes[0] in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createEndOfMatchEmbed(player_name)  # "In Queue -> Playing Smite"
+                    await msg.edit(embed=embed)
                     msg = None
 
-                if acceptable_prefixes[0] or acceptable_prefixes[
-                    1] and before_smite_status == "In Lobby":  # "In Lobby -> Playing/Streaming Smite"
-                    embed = self.createEndOfMatchEmbed(player_name)
-                    await msg.edit(tracked_channel.send(embed=embed))
+                if acceptable_prefixes[1] in after_smite_status and before_smite_status == "In Queue":
+                    embed = self.createEndOfMatchEmbed(player_name)  # "In Queue -> Streaming Smite"
+                    await msg.edit(embed=embed)
                     msg = None
 
+                if acceptable_prefixes[0] in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createEndOfMatchEmbed(player_name)  # "In Lobby -> Playing Smite"
+                    await msg.edit(embed=embed)
+                    msg = None
+                if acceptable_prefixes[1] in after_smite_status and before_smite_status == "In Lobby":
+                    embed = self.createEndOfMatchEmbed(player_name)  # "In Lobby -> Streaming Smite"
+                    await msg.edit(embed=embed)
+                    msg = None
     @commands.slash_command(name="trackme", description="Query live match")
     async def trackme(self, ctx, playername):
         user_id = str(ctx.author.id)
