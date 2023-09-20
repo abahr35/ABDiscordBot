@@ -11,15 +11,34 @@ from pyrez.api import SmiteAPI
 load_dotenv()
 
 
-class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch):
+class PlayerStats(pyrez.models.Smite.Player, pyrez.models.PlayerAcheviements):
+    def __init__(self, **kwargs):
+        pyrez.models.Smite.Player.__init__(self, **kwargs)
+        pyrez.models.PlayerAcheviements.__init__(self, **kwargs)
+
+
+class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.models.PlayerAcheviements):
     def __init__(self, **kwargs):
         pyrez.models.Smite.Player.__init__(self, **kwargs)
         pyrez.models.LiveMatch.__init__(self, **kwargs)
+        pyrez.models.PlayerAcheviements.__init__(self, **kwargs)
         if self.hidden_profile:
             self.setPlayerName("~~Hidden Profile~~")
+
         self.partyNumber = 0
-        self.emoji = None
+        self.partyEmoji = ""
+        self.godEmoji = None
         self.isSolo = False
+        self.itemEmojis = None
+        self.item1 = None
+        self.item2 = None
+        self.item3 = None
+        self.item4 = None
+        self.item5 = None
+        self.item6 = None
+
+        self.platformEmoji = None
+        self.setPlatformEmoji()
 
     def setPlayerName(self, name: str):
         self.playerName = name
@@ -27,56 +46,108 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch):
     def setParty(self, partyID: int):
         self.partyNumber = partyID
 
-    def getParty(self):
-        return self.partyNumber
+    def setPartyEmoji(self):
+        if self.partyNumber == 1:
+            self.partyEmoji = "<:party1:1131297842980458506>"
+        elif self.partyNumber == 2:
+            self.partyEmoji = "<:party2:1131297853403316276>"
+        elif self.partyNumber == 3:
+            self.partyEmoji = "<:party3:1131297867164819616> "
+        elif self.partyNumber == 4:
+            self.partyEmoji = "<:party4:1131297899607752807> "
+        else:
+            self.partyEmoji = "<:partySolo:1131267287958179851>"
 
-    def setEmoji(self, emoji):
-        self.emoji = emoji
+    def setPlatformEmoji(self):
+        """
+            Unknown = -1
+            HiRez = 1
+            Steam = 5
+            PS4 = 9
+            Xbox = 10
+            Switch = 22
+            Discord = 25
+            Epic_Games = 28
 
-    def getEmoji(self):
-        return self.emoji
+        :return:
+        """
+        if self.playerPortalId is not None:
+            if self.playerPortalId == "1":
+                self.platformEmoji = "<:portalHirez:1134174555938754571>"
+            elif self.playerPortalId == "5":
+                self.platformEmoji = "<:portalSteam:1134174557620678707>"
+            elif self.playerPortalId == "9":
+                self.platformEmoji = "<:portalPS:1134174557025083493>"
+            elif self.playerPortalId == "10":
+                self.platformEmoji = "<:portalXbox:1134174560237916341>"
+            elif self.playerPortalId == "22":
+                self.platformEmoji = "<:portalSwitch:1134174559243870300>"
+            elif self.playerPortalId == "25":
+                self.platformEmoji = "<:portalDiscord:1134174552654618688>"
+            elif self.playerPortalId == "28":
+                self.platformEmoji = "<:portalEpic:1134174554865029201>"
+            else:
+                self.platformEmoji = "<:blank:1131261670153527346>"
+
+        else:
+            if self.Platform == "Hirez":
+                self.platformEmoji = "<:portalHirez:1134174555938754571>"
+            elif self.Platform == "Steam":
+                self.platformEmoji = "<:portalSteam:1134174557620678707>"
+            elif self.Platform == "PSN":
+                self.platformEmoji = "<:portalPS:1134174557025083493>"
+            elif self.Platform == "XboxLive":
+                self.platformEmoji = "<:portalXbox:1134174560237916341>"
+            elif self.Platform == "Nintendo":
+                self.platformEmoji = "<:portalSwitch:1134174559243870300>"
+            elif self.Platform == "Discord":
+                self.platformEmoji = "<:portalDiscord:1134174552654618688>"
+            elif self.Platform == "EpicGames":
+                self.platformEmoji = "<:portalEpic:1134174554865029201>"
+            else:
+                self.platformEmoji = "<:blank:1131261670153527346>"
+
+    def setGodEmoji(self, emoji):
+        self.godEmoji = emoji
+
+    def getGodEmoji(self):
+        return self.godEmoji
 
     @property
-    def matchKDA(self):
-        return f"{self.Kills_Player}/{self.Deaths}/{self.Assists}"
+    def currentMatchKDA(self):
+        return f"{self.Kills_Player}/{self.match_Deaths}/{self.Assists}"
 
     @property
     def kdr(self):
-        # total_kills = self. + (assists * 0.5)
-        # kdr = total_kills / deaths if deaths != 0 else total_kills
-        return 0  # or kdr
-
-    def getPortal(self):
         try:
-            return pyrez.enumerations.PortalId(self.portalId).name
-        except ValueError:
-            return "Mystery Console"
+            total_kills = (self.AssistedKills / 2) + self.PlayerKills
+            if self.Deaths != 0:
+                kdr = total_kills / self.Deaths
+                return round(kdr, 2)
+            else:
+                return total_kills
+
+        except:
+            return 0
+
+    def gatherItemEmojis(self):
+        emojis = ""
+        emojis += str(self.item1)
+        emojis += str(self.item2)
+        emojis += str(self.item3)
+        emojis += str(self.item4)
+        emojis += str(self.item5)
+        emojis += str(self.item6)
+        return emojis
 
 
 class CompleteTeam:
     def __init__(self, CompletePlayerList: list[CompletePlayer]):
         self.CompletePlayerList = CompletePlayerList
-        self.calculateParties()
         self.Win_Status = CompletePlayerList[0].Win_Status
         self.Match_Id = CompletePlayerList[0].matchId
-
-    def calculateParties(self):
-        party_map = {}  # Dictionary to map party IDs to party numbers
-        party_counter = 0  # Counter to track the current party number
-
-        for player in self.CompletePlayerList:
-            party_id = player.PartyId
-
-            if party_id in party_map:
-                # If party ID already exists in the map, assign the existing party number
-                party_number = party_map[party_id]
-            else:
-                # If party ID is new, increment the counter and assign the next party number
-                party_counter += 1
-                party_number = party_counter
-                party_map[party_id] = party_number
-
-            player.setParty(party_number)
+        self.prediction = None
+        self.AvgScore = None
 
     @property
     def totalDamage(self):
@@ -86,17 +157,17 @@ class CompleteTeam:
         return totalDamage
 
     @property
-    def kda(self) -> str:
+    def team_kda(self) -> str:
         """
         calculates teams KDA
         :return: Team Kills/Deaths/Assists
         """
-        t1KDA = [(player.Kills_Player, player.Deaths, player.Assists) for player in self.CompletePlayerList]
-        pCount = len(t1KDA)
-        avgKills = sum([e[0] for e in t1KDA]) / pCount
-        avgDeaths = sum(e[1] for e in t1KDA) / pCount
-        avgAssists = sum(e[2] for e in t1KDA) / pCount
-        return f"{int(avgKills)}/{int(avgDeaths)}/{int(avgAssists)}"
+
+        t1KDA = [(player.Kills_Player, player.match_Deaths, player.Assists) for player in self.CompletePlayerList]
+        Kills = sum(e[0] for e in t1KDA)
+        Deaths = sum(e[1] for e in t1KDA)
+        Assists = sum(e[2] for e in t1KDA)
+        return f"{int(Kills)}/{int(Deaths)}/{int(Assists)}"
 
 
 class SmiteTracker:
@@ -109,68 +180,55 @@ class SmiteTracker:
             totalDamage += player.Damage_Player
         return totalDamage
 
-    def getKDA(self, playerList):
-        teamKills = 0
-        teamDeaths = 0
-        teamAssists = 0
-        for player in playerList:
-            teamKills += player.Kills_Player
-            teamDeaths += player.Deaths
-            teamAssists += player.Assists
-        return f"{teamKills}/{teamDeaths}/{teamAssists}"
-
     def getMatchType(self, gameModeId):
         if gameModeId is None:
-            raise TypeError
+            return ""
         try:
             return pyrez.enumerations.QueueSmite(gameModeId).name
         except ValueError:
             return "Mystery Game"
 
     def getPlayerStats(self, inGameName: str):
-        try:
-            return self.smite.getPlayer(inGameName)
-        except pyrez.PlayerNotFound:
-            return pyrez.models.Player
+        playerStats = self.smite.getPlayer(inGameName)
+        playerAchivements = self.smite.getPlayerAchievements(playerStats.playerId)
 
-    def generateParty(self, players) -> tuple[list[CompletePlayer], list[CompletePlayer]]:
-        party_map = {}  # Dictionary to map party IDs to party numbers
-        party_counter = 0  # Counter to track the current party number
+        playerDict = {}
+        playerDict.update(playerStats.__kwargs__)
+        playerDict.update(playerAchivements.__kwargs__)
+        _ = PlayerStats(**playerDict)
+        return _
 
-        for player in players:
-            party_id = player.PartyId
-
-            if party_id in party_map:
-                # If party ID already exists in the map, assign the existing party number
-                party_number = party_map[party_id]
-            else:
-                # If party ID is new, increment the counter and assign the next party number
-                party_counter += 1
-                party_number = party_counter
-                party_map[party_id] = party_number
-
-            player.setParty(party_number)
-
-            # print(f"partyID: {party_id} -> partyNumber: {party_number}")
-
-        return self.sortTeams(players)
-
-    def createCompleteStats(self, InGameName):
+    def createCompleteStatsLive(self, InGameName):
+        """
+            Gets match data from recent match. Uses data from match to get player stats and achievements.
+            Internally handles private players.
+            Also sorts by team to return.
+        :param InGameName: string
+        :return: tuple(CompleteTeam, CompleteTeam)
+        """
         compiledMatch = []
-        match = self.getRecentMatch(InGameName)
+        match = self.getLiveMatch(InGameName)
         for player in match:
             match_dict = player.__kwargs__
             try:
+                match_dict["match_Deaths"] = match_dict["Deaths"]
+            except KeyError:
+                pass
+
+            try:
                 if player.playerName == "":
                     player.playerName = "~~Hidden Profile~~"
+                player_achievement_dict = self.smite.getPlayerAchievements(player.playerId).__kwargs__
                 player_dict = self.smite.getPlayer(player.playerId).__kwargs__
 
             except pyrez.exceptions.PlayerNotFound:
                 player_dict = pyrez.models.Smite.Player()
+                player_achievement_dict = pyrez.PlayerAcheviements()
 
             combined_data = {}
             combined_data.update(match_dict)
             combined_data.update(player_dict)
+            combined_data.update(player_achievement_dict)
 
             compiledMatch.append(CompletePlayer(**combined_data))
 
@@ -180,6 +238,47 @@ class SmiteTracker:
 
         teamOne, teamTwo = CompleteTeam(teamOneList), CompleteTeam(teamTwoList)
 
+        return teamOne, teamTwo
+
+    def createCompleteMatchStats(self, InGameName):
+        """
+            Gets match data from recent match. Uses data from match to get player stats and achievements.
+            Internally handles private players.
+            Also sorts by team to return.
+        :param InGameName: string
+        :return: tuple(CompleteTeam, CompleteTeam)
+        """
+
+        compiledMatch = []
+        match = self.getRecentMatch(InGameName)
+        for player in match:
+            match_dict = player.__kwargs__
+            try:
+                match_dict["match_Deaths"] = match_dict["Deaths"]
+            except KeyError:
+                pass
+            try:
+                if player.playerName == "":
+                    player.playerName = "~~Hidden Profile~~"
+                player_achievement_dict = self.smite.getPlayerAchievements(player.playerId).__kwargs__
+                player_dict = self.smite.getPlayer(player.playerId).__kwargs__
+
+            except pyrez.exceptions.PlayerNotFound:
+                player_dict = pyrez.models.Smite.Player()
+                player_achievement_dict = pyrez.PlayerAcheviements()
+
+            combined_data = {}
+            combined_data.update(match_dict)
+            combined_data.update(player_dict)
+            combined_data.update(player_achievement_dict)
+
+            compiledMatch.append(CompletePlayer(**combined_data))
+
+        teamOneList, teamTwoList = [], []
+        for player in compiledMatch:
+            (teamOneList, teamTwoList)[player.taskForce == 1].append(player)
+
+        teamOne, teamTwo = CompleteTeam(teamOneList), CompleteTeam(teamTwoList)
         return teamOne, teamTwo
 
     def createLiveCompleteStats(self, InGameName):
@@ -239,13 +338,18 @@ def main():
     devID = int(os.getenv("DEV_ID"))
     key = os.getenv("AUTH_KEY")
     wow = SmiteTracker(devID, key)
-    name = "JodiHighRoll3r"
+    name = "jsmy_12"
 
-    match = wow.createCompleteStats(name)
+    # player = wow.smite.getMatchHistory(wow.getPlayerID(name))
+    # ids = wow.smite.searchPlayers(name)
+    # print(player)
 
-    sortedMatch = wow.generateParty(match)
+    ids = wow.smite.getMatchIds("426", hour="13,00")
+    for iD in ids:
+        print(iD.matchId)
 
-    print(sortedMatch[0][0])
+    matchData = wow.smite.getMatch(ids[0].matchId)
+    print(matchData)
 
     # for player in sortedMatch[0]:
     #     print(player.playerName)

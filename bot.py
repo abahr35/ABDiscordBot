@@ -3,6 +3,7 @@ import traceback
 
 import discord, dotenv, os
 from discord.ext import commands
+from pymongo import MongoClient
 from discord.ext.commands import Greedy, Context
 from typing import Optional, Literal
 
