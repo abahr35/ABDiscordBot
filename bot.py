@@ -1,11 +1,9 @@
 import asyncio
 import traceback
-
+import logging
 import discord, dotenv, os
 from discord.ext import commands
-from pymongo import MongoClient
-from discord.ext.commands import Greedy, Context
-from typing import Optional, Literal
+
 
 dotenv.load_dotenv()
 token = str(os.getenv("DISCORD_TOKEN"))
@@ -85,7 +83,8 @@ async def reload_cogs(ctx, cog=None):
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} is ready and online!")
+    logging.debug(f"{bot.user} is ready and online!")
+    # print(f"{bot.user} is ready and online!")
 
 load_cogs()
 bot.run(token)

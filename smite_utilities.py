@@ -1,4 +1,5 @@
 import os
+import re
 
 import pyrez
 import pyrez.api
@@ -22,8 +23,11 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
         pyrez.models.Smite.Player.__init__(self, **kwargs)
         pyrez.models.LiveMatch.__init__(self, **kwargs)
         pyrez.models.PlayerAcheviements.__init__(self, **kwargs)
-        if self.hidden_profile:
-            self.setPlayerName("~~Hidden Profile~~")
+
+        if kwargs.get("playerName") == "":
+            kwargs["playerName"] = "~~HiddenProfile~~"
+            self.setPlayerName("~~HiddenProfile~~")
+        self.setPlayerName(re.sub(r"\[.*?\]", '', kwargs.get("playerName")))
 
         self.partyNumber = 0
         self.partyEmoji = ""
@@ -36,7 +40,6 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
         self.item4 = None
         self.item5 = None
         self.item6 = None
-
         self.platformEmoji = None
         self.setPlatformEmoji()
 
@@ -130,7 +133,13 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
         except:
             return 0
 
-    def gatherItemEmojis(self):
+    def groupItemEmojis(self):
+        """
+        makes emojis readable for embed
+        e1+e2+e3...
+
+        :return: str(emojis)
+        """
         emojis = ""
         emojis += str(self.item1)
         emojis += str(self.item2)
@@ -215,22 +224,31 @@ class SmiteTracker:
             except KeyError:
                 pass
 
-            try:
-                if player.playerName == "":
-                    player.playerName = "~~Hidden Profile~~"
-                player_achievement_dict = self.smite.getPlayerAchievements(player.playerId).__kwargs__
-                player_dict = self.smite.getPlayer(player.playerId).__kwargs__
-
-            except pyrez.exceptions.PlayerNotFound:
+            if player.hidden_profile:
+                player.playerName = "~~Hidden Profile~~"
                 player_dict = pyrez.models.Smite.Player()
                 player_achievement_dict = pyrez.PlayerAcheviements()
+                combined_data = {}
+                combined_data.update(match_dict)
+                combined_data.update(player_dict)
+                combined_data.update(player_achievement_dict)
+                compiledMatch.append(CompletePlayer(**combined_data))
 
-            combined_data = {}
-            combined_data.update(match_dict)
-            combined_data.update(player_dict)
-            combined_data.update(player_achievement_dict)
+            else:  # not Private
+                try:
+                    player_achievement_dict = self.smite.getPlayerAchievements(player.playerId).__kwargs__
+                    player_dict = self.smite.getPlayer(player.playerId).__kwargs__
 
-            compiledMatch.append(CompletePlayer(**combined_data))
+                except pyrez.exceptions.PlayerNotFound:
+                    player_dict = pyrez.models.Smite.Player()
+                    player_achievement_dict = pyrez.PlayerAcheviements()
+
+                combined_data = {}
+                combined_data.update(match_dict)
+                combined_data.update(player_dict)
+                combined_data.update(player_achievement_dict)
+
+                compiledMatch.append(CompletePlayer(**combined_data))
 
         teamOneList, teamTwoList = [], []
         for player in compiledMatch:
@@ -257,12 +275,10 @@ class SmiteTracker:
                 match_dict["match_Deaths"] = match_dict["Deaths"]
             except KeyError:
                 pass
+
             try:
-                if player.playerName == "":
-                    player.playerName = "~~Hidden Profile~~"
                 player_achievement_dict = self.smite.getPlayerAchievements(player.playerId).__kwargs__
                 player_dict = self.smite.getPlayer(player.playerId).__kwargs__
-
             except pyrez.exceptions.PlayerNotFound:
                 player_dict = pyrez.models.Smite.Player()
                 player_achievement_dict = pyrez.PlayerAcheviements()
@@ -271,7 +287,6 @@ class SmiteTracker:
             combined_data.update(match_dict)
             combined_data.update(player_dict)
             combined_data.update(player_achievement_dict)
-
             compiledMatch.append(CompletePlayer(**combined_data))
 
         teamOneList, teamTwoList = [], []
@@ -279,33 +294,6 @@ class SmiteTracker:
             (teamOneList, teamTwoList)[player.taskForce == 1].append(player)
 
         teamOne, teamTwo = CompleteTeam(teamOneList), CompleteTeam(teamTwoList)
-        return teamOne, teamTwo
-
-    def createLiveCompleteStats(self, InGameName):
-        compiledMatch = []
-        match = self.getLiveMatch(InGameName)
-        for player in match:
-            match_dict = player.__kwargs__
-            try:
-                if player.playerName == "":
-                    player.playerName = "~~Hidden Profile~~"
-                player_dict = self.smite.getPlayer(player.playerId).__kwargs__
-
-            except pyrez.exceptions.PlayerNotFound:
-                player_dict = pyrez.models.Smite.Player()
-
-            combined_data = {}
-            combined_data.update(match_dict)
-            combined_data.update(player_dict)
-
-            compiledMatch.append(CompletePlayer(**combined_data))
-
-        teamOneList, teamTwoList = [], []
-        for player in compiledMatch:
-            (teamOneList, teamTwoList)[player.taskForce == 1].append(player)
-
-        teamOne, teamTwo = CompleteTeam(teamOneList), CompleteTeam(teamTwoList)
-
         return teamOne, teamTwo
 
     def getPlayerID(self, inGameName: str):
@@ -338,39 +326,11 @@ def main():
     devID = int(os.getenv("DEV_ID"))
     key = os.getenv("AUTH_KEY")
     wow = SmiteTracker(devID, key)
-    name = "jsmy_12"
+    name = "JodiHighroll3r"
 
     # player = wow.smite.getMatchHistory(wow.getPlayerID(name))
-    # ids = wow.smite.searchPlayers(name)
-    # print(player)
-
-    ids = wow.smite.getMatchIds("426", hour="13,00")
-    for iD in ids:
-        print(iD.matchId)
-
-    matchData = wow.smite.getMatch(ids[0].matchId)
-    print(matchData)
-
-    # for player in sortedMatch[0]:
-    #     print(player.playerName)
-
-    # print("T1")
-    # for player in sortedMatch[0]:
-    #     print()
-    #     print(player.playerName)
-    #     print(player.getParty())
-    #     print(player.godName)
-    #     print(player.godId)
-    #     print(player.PartyId)
     #
-    # print("\nT2")
-    # for player in sortedMatch[1]:
-    #     print()
-    #     print(player.playerName)
-    #     print(player.getParty())
-    #     print(player.godName)
-    #     print(player.godId)
-    #     print(player.PartyId)
+    # print(player)
 
 
 if __name__ == "__main__":
