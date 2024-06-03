@@ -1,6 +1,7 @@
 import os
 import re
 
+from helpers import smiteEnums
 import pyrez
 import pyrez.api
 import pyrez.enumerations
@@ -24,6 +25,7 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
         pyrez.models.LiveMatch.__init__(self, **kwargs)
         pyrez.models.PlayerAcheviements.__init__(self, **kwargs)
 
+        # Checking for name, overwriting garbage data
         if kwargs.get("playerName") == "":
             kwargs["playerName"] = "~~HiddenProfile~~"
             self.setPlayerName("~~HiddenProfile~~")
@@ -41,7 +43,31 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
         self.item5 = None
         self.item6 = None
         self.platformEmoji = None
+        self.ConquestEmoji = None
+        self.JoustEmoji = None
+        self.DuelEmoji = None
+        self.setGodEmoji()
         self.setPlatformEmoji()
+        self.setRankEmojis()
+
+    def setRankEmojis(self):
+        try:
+            rankedCQ = smiteEnums.Rank(self.__kwargs__.get("Tier_Conquest")).name
+        except ValueError:
+            rankedCQ = "Unranked"
+        self.ConquestEmoji = smiteEnums.RankEmoji["Conquest" + re.sub(r'(I{1,3}|IV|V)$', '', rankedCQ)].value
+
+        try:
+            rankedJ = smiteEnums.Rank(self.__kwargs__.get("Tier_Joust")).name
+        except ValueError:
+            rankedJ = "Unranked"
+        self.JoustEmoji = smiteEnums.RankEmoji["Joust" + re.sub(r'(I{1,3}|IV|V)$', '', rankedJ)].value
+
+        try:
+            rankedD = smiteEnums.Rank(self.__kwargs__.get("Tier_Duel")).name
+        except ValueError:
+            rankedD = "Unranked"
+        self.DuelEmoji = smiteEnums.RankEmoji["Duel" + re.sub(r'(I{1,3}|IV|V)$', '', rankedD)].value
 
     def setPlayerName(self, name: str):
         self.playerName = name
@@ -110,8 +136,14 @@ class CompletePlayer(pyrez.models.Smite.Player, pyrez.models.LiveMatch, pyrez.mo
             else:
                 self.platformEmoji = "<:blank:1131261670153527346>"
 
-    def setGodEmoji(self, emoji):
-        self.godEmoji = emoji
+    def setGodEmoji(self):
+        print(smiteEnums.God(self.__kwargs__.get("GodId")).name)
+        try:
+            self.godEmoji = smiteEnums.Emoji[
+                smiteEnums.God(self.__kwargs__.get("GodId")).name.replace(" ", "").replace("'", "").replace("_",
+                                                                                                            "")].value
+        except KeyError:
+            self.godEmoji = smiteEnums.UIEmoji["blank"].value
 
     def getGodEmoji(self):
         return self.godEmoji
@@ -155,8 +187,32 @@ class CompleteTeam:
         self.CompletePlayerList = CompletePlayerList
         self.Win_Status = CompletePlayerList[0].Win_Status
         self.Match_Id = CompletePlayerList[0].matchId
-        self.prediction = None
-        self.AvgScore = None
+        self.CalculateAverageMMR()
+        self.CalculateAverageRank()
+        self.CQAvgMMR = 0
+        self.JAvgMMR = 0
+        self.DAvgMMR = 0
+        self.CQAvgRank = 0
+        self.JAvgRank = 0
+        self.DAvgRank = 0
+        self.CQRankEmoji = ""
+        self.JRankEmoji = ""
+        self.DRankEmoji = ""
+        self.CQRankName = ""
+        self.JRankName = ""
+        self.DRankName = ""
+
+    @property
+    def getConquestAverage(self):
+        return self.CQAvgMMR
+
+    @property
+    def getJoustAverage(self):
+        return self.JAvgMMR
+
+    @property
+    def getDuelAverage(self):
+        return self.DAvgMMR
 
     @property
     def totalDamage(self):
@@ -177,6 +233,46 @@ class CompleteTeam:
         Deaths = sum(e[1] for e in t1KDA)
         Assists = sum(e[2] for e in t1KDA)
         return f"{int(Kills)}/{int(Deaths)}/{int(Assists)}"
+
+    def CalculateAverageRank(self):
+        for player in self.CompletePlayerList:
+            self.CQAvgRank += smiteEnums.Rank(player.tierConquest).value
+            self.JAvgRank += smiteEnums.Rank(player.tierJoust).value
+            self.DAvgRank += smiteEnums.Rank(player.tierDuel).value
+        self.CQAvgRank /= len(self.CompletePlayerList)
+        self.JAvgRank /= len(self.CompletePlayerList)
+        self.DAvgRank /= len(self.CompletePlayerList)
+
+        try:
+            rankedCQ = smiteEnums.Rank(int(self.CQAvgRank)).name
+        except ValueError:
+            rankedCQ = "Unranked"
+        self.CQRankEmoji = smiteEnums.RankEmoji["Conquest" + re.sub(r'(I{1,3}|IV|V)$', '', rankedCQ)].value
+        self.CQRankName = smiteEnums.Rank(int(self.CQAvgRank))
+
+        try:
+            rankedJ = smiteEnums.Rank(int(self.JAvgRank)).name
+        except ValueError:
+            rankedJ = "Unranked"
+        self.JRankEmoji = smiteEnums.RankEmoji["Joust" + re.sub(r'(I{1,3}|IV|V)$', '', rankedJ)].value
+        self.JRankName = smiteEnums.Rank(int(self.JAvgRank))
+
+        try:
+            rankedD = smiteEnums.Rank(int(self.DAvgRank)).name
+        except ValueError:
+            rankedD = "Unranked"
+        self.DRankEmoji = smiteEnums.RankEmoji["Duel" + re.sub(r'(I{1,3}|IV|V)$', '', rankedD)].value
+        self.DRankName = smiteEnums.Rank(int(self.DAvgRank))
+
+    def CalculateAverageMMR(self):
+        # Conquest
+        for player in self.CompletePlayerList:
+            self.CQAvgMMR += player.rankedConquest.rankStat
+            self.JAvgMMR += player.rankedJoust.rankStat
+            self.DAvgMMR += player.rankedDuel.rankStat
+        self.CQAvgMMR /= len(self.CompletePlayerList)
+        self.JAvgMMR /= len(self.CompletePlayerList)
+        self.DAvgMMR /= len(self.CompletePlayerList)
 
 
 class SmiteTracker:
@@ -327,10 +423,6 @@ def main():
     key = os.getenv("AUTH_KEY")
     wow = SmiteTracker(devID, key)
     name = "JodiHighroll3r"
-
-    # player = wow.smite.getMatchHistory(wow.getPlayerID(name))
-    #
-    # print(player)
 
 
 if __name__ == "__main__":

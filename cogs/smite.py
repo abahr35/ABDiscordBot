@@ -3,17 +3,16 @@ import time
 from datetime import datetime
 import discord
 import logging
-from helpers import embedHelper, smiteHelper, smiteEnums
+from helpers import embedHelper, smiteHelper, smiteEnums, emojiVerifier
 from discord.ext import commands
 from smite_utilities import SmiteTracker
+
 
 class smite(commands.Cog):
 
     # TODO
     # - redo stats
     # - throw no player found error when using trackme and change tagline
-    # - make emoji for parties
-    # - implement emojis for items (ugh)
 
     def __init__(self, bot):
 
@@ -23,6 +22,8 @@ class smite(commands.Cog):
         self.Smite = SmiteTracker(self.id, self.key)
         self.emojis = {}
         self.tracked_users = {}
+        # emojiVerifier.VerifyGods(self.Smite, self.emojis)
+        # emojiVerifier.VerifyItems()
 
     def createEndOfMatchEmbed(self, ign: str):
         """
@@ -36,7 +37,6 @@ class smite(commands.Cog):
         """
 
         sortedTeams = self.Smite.createCompleteMatchStats(ign)  # returns tuple of teams
-        print(sortedTeams[0].CompletePlayerList[0].playerName)
         smiteHelper.calculateParties(sortedTeams)  # calculate Party Numbers
         smiteHelper.batchSetEmoji(sortedTeams)  # Set emojis for items and gods for both teams
         embed = embedHelper.CreateSettings(sortedTeams)  # Start the creation of an Embed
@@ -87,8 +87,7 @@ class smite(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        logging.debug("Emojis Loading...")
-        # print("Emojis Loading...")
+        print("Emojis Loading...")
         guilds = [await self.bot.fetch_guild(959898607841075210),
                   await self.bot.fetch_guild(821514908327608330),
                   await self.bot.fetch_guild(1093656432278245558),
@@ -103,10 +102,8 @@ class smite(commands.Cog):
         for guild in guilds:
             for emoji in guild.emojis:
                 self.emojis[str(emoji.name)] = emoji
-        logging.debug("Emojis Loaded")
-        logging.debug("Smite Cog Ready")
-        # print("Emojis Loaded")
-        # print("Smite Cog Ready")
+        print("Emojis Loaded")
+        print("Smite Cog Ready")
 
     @discord.slash_command(name="livematchtest", description="Query stats for a test match")
     async def livematchtest(self, ctx, ign):
@@ -173,7 +170,8 @@ class smite(commands.Cog):
 
             print(f"{datetime.now()} {(before_smite_status, after_smite_status)} and {tracked_presence}")
             if (
-            before_smite_status, after_smite_status) != tracked_presence:  # Check if the status has actually changed
+                    before_smite_status,
+                    after_smite_status) != tracked_presence:  # Check if the status has actually changed
                 print(
                     f"successfully seen {before.name}:{user_id} change presence from {before_smite_status} to {after_smite_status} in {tracked_guild_id}")
                 self.tracked_users[user_id]["old_presence"] = (before_smite_status, after_smite_status)

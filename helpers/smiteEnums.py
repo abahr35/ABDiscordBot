@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class QueueType(Enum):
     Conquest = 426
     # Conquest = 423
@@ -53,6 +54,181 @@ class QueueType(Enum):
     Ranked_Joust_GamePad = 503
     Conquest_Ranked_GamePad = 504
     Slash = 10189
+
+
+class God(Enum):
+    Achilles = 3492
+    Agni = 1737
+    AhMuzenCab = 1956
+    AhPuch = 2056
+    Amaterasu = 2110
+    Anhur = 1773
+    Anubis = 1668
+    AoKuang = 2034
+    Aphrodite = 1898
+    Apollo = 1899
+    Arachne = 1699
+    Ares = 1782
+    Artemis = 1748
+    Artio = 3336
+    Athena = 1919
+    Atlas = 4034
+    Awilix = 2037
+    BabaYaga = 3925
+    Bacchus = 1809
+    Bakasura = 1755
+    BakeKujira = 4268
+    BaronSamedi = 3518
+    Bastet = 1678
+    Bellona = 2047
+    Cabrakan = 2008
+    Camazotz = 2189
+    Cerberus = 3419
+    Cernunnos = 2268
+    Chaac = 1966
+    Change = 1921
+    Charybdis = 4010
+    Chernobog = 3509
+    Chiron = 2075
+    Chronos = 1920
+    Cliodhna = 4017
+    Cthulhu = 3945
+    CuChulainn = 2319
+    Cupid = 1778
+    DaJi = 2270
+    Danzaburou = 3984
+    Discordia = 3377
+    ErlangShen = 2138
+    Isis = 1918
+    Fafnir = 2136
+    Fenrir = 1843
+    Freya = 1784
+    Ganesha = 2269
+    Geb = 1978
+    Gilgamesh = 3997
+    GuanYu = 1763
+    Hachiman = 3344
+    Hades = 1676
+    HeBo = 1674
+    Heimdallr = 3812
+    Hel = 1718
+    Hera = 3558
+    Hercules = 1848
+    Horus = 3611
+    HouYi = 2040
+    HunBatz = 1673
+    Ishtar = 4137
+    IxChel = 4242
+    Izanami = 2179
+    Janus = 1999
+    JingWei = 2122
+    Jormungandr = 3585
+    Kali = 1649
+    Khepri = 2066
+    KingArthur = 3565
+    Kukulkan = 1677
+    Kumbhakarna = 1993
+    Kuzenbo = 2260
+    Lancelot = 4075
+    Loki = 1797
+    Martichoras = 4213
+    Maui = 4183
+    Medusa = 2051
+    Mercury = 1941
+    Merlin = 3566
+    MorganLeFay = 4006
+    Mulan = 3881
+    NeZha = 1915
+    Neith = 1872
+    Nemesis = 1980
+    Nike = 2214
+    Nox = 2036
+    NuWa = 1958
+    Odin = 1669
+    Olorun = 3664
+    Osiris = 2000
+    Pele = 3543
+    Persephone = 3705
+    Poseidon = 1881
+    Ra = 1698
+    Raijin = 2113
+    Rama = 2002
+    Ratatoskr = 2063
+    Ravana = 2065
+    Scylla = 1988
+    Serqet = 2005
+    Set = 3612
+    Shiva = 4039
+    Skadi = 2107
+    Sobek = 1747
+    Sol = 2074
+    SunWukong = 1944
+    Surtr = 4191
+    Susano = 2123
+    Sylvanus = 2030
+    Terra = 2147
+    Thanatos = 1943
+    TheMorrigan = 2226
+    Thor = 1779
+    Thoth = 2203
+    Tiamat = 3990
+    Tsukuyomi = 3954
+    Tyr = 1924
+    Ullr = 1991
+    Vamana = 1723
+    Vulcan = 1869
+    Xbalanque = 1864
+    XingTian = 2072
+    Yemoja = 3811
+    Ymir = 1670
+    YuHuang = 4060
+    Zeus = 1672
+    ZhongKui = 1926
+
+    @property
+    def isWarrior(self):
+        return self in [God.Achilles, God.Amaterasu, God.Bellona, God.Chaac, God.CuChulainn, God.ErlangShen,
+                        God.Gilgamesh, God.GuanYu, God.Hercules, God.Horus, God.KingArthur, God.Mulan,
+                        God.Nike, God.Odin, God.Osiris, God.Shiva, God.SunWukong, God.Surtr, God.Tyr,
+                        God.Vamana]
+
+    @property
+    def isMage(self):
+        return self in [God.Agni, God.AhPuch, God.Anubis, God.AoKuang, God.Aphrodite, God.BabaYaga,
+                        God.BaronSamedi, God.Change, God.Chronos, God.Discordia, God.Isis, God.Freya, God.Hades,
+                        God.HeBo, God.Hel, God.Hera, God.IxChel, God.Janus, God.Kukulkan, God.Merlin,
+                        God.MorganLeFay, God.Nox, God.NuWa, God.Olorun, God.Persephone, God.Poseidon, God.Ra,
+                        God.Raijin, God.Scylla, God.Sol, God.TheMorrigan, God.Thoth, God.Tiamat, God.Vulcan,
+                        God.YuHuang, God.Zeus, God.ZhongKui]
+
+    @property
+    def isHunter(self):
+        return self in [God.AhMuzenCab, God.Anhur, God.Apollo, God.Artemis, God.Cernunnos, God.Charybdis,
+                        God.Chernobog, God.Chiron, God.Cupid, God.Danzaburou, God.Hachiman, God.Heimdallr,
+                        God.HouYi, God.Ishtar, God.Izanami, God.JingWei, God.Martichoras, God.Medusa,
+                        God.Neith, God.Rama, God.Skadi, God.Ullr, God.Xbalanque]
+
+    @property
+    def isAssassin(self):
+        return self in [God.Arachne, God.Awilix, God.Bakasura, God.Bastet, God.Camazotz, God.Cliodhna, God.DaJi,
+                        God.Fenrir, God.HunBatz, God.Kali, God.Lancelot, God.Loki, God.Mercury, God.NeZha,
+                        God.Nemesis, God.Pele, God.Ratatoskr, God.Ravana, God.Serqet, God.Set, God.Susano,
+                        God.Thanatos, God.Thor, God.Tsukuyomi]
+
+    @property
+    def isGuardian(self):
+        return self in [God.Ares, God.Artio, God.Athena, God.Atlas, God.Bacchus, God.Cabrakan, God.Cerberus,
+                        God.Cthulhu, God.Fafnir, God.Ganesha, God.Geb, God.Jormungandr, God.Khepri,
+                        God.Kumbhakarna, God.Kuzenbo, God.Maui, God.Sobek, God.Sylvanus, God.Terra,
+                        God.XingTian, God.Yemoja, God.Ymir]
+
+    @property
+    def getCard(self):
+        return "https://web2.hirez.com/smite/god-cards/{}.jpg".format(self.name.lower().replace('_', '-'))
+
+    @property
+    def getIcon(self):
+        return "https://web2.hirez.com/smite/god-icons/{}.jpg".format(self.name.lower().replace('_', '-'))
 
 
 class Emoji(Enum):
@@ -564,6 +740,9 @@ class Emoji(Enum):
     Witchblade = "<:Witchblade:1131252319644827648>"
     WarriorsAxe = "<:WarriorsAxe:1131252321372885133>"
     WarriorsBane = "<:WarriorsBane:1131252322283044935>"
+
+
+class UIEmoji(Enum):
     blank = "<:blank:1131261670153527346>"
     partySolo = "<:partySolo:1131267287958179851>"
     party1 = "<:party1:1131297842980458506>"
@@ -580,3 +759,413 @@ class Emoji(Enum):
     portalSwitch = "<:portalSwitch:1134174559243870300>"
     portalXbox = "<:portalXbox:1134174560237916341>"
 
+
+class Item(Enum):
+    IronMail = 7526
+    SteelMail = 7527
+    Sovereignty = 7528
+    MysticalMail = 7537
+    MidgardianMail = 7907
+    EmperorsArmor = 13189
+    LightBlade = 7573
+    BalancedBlade = 7574
+    TheExecutioner = 7575
+    QinsSais = 7593
+    Asi = 17090
+    TheHeavyExecutioner = 22960
+    TheFerociousExecutioner = 23135
+    TinyTrinket = 7610
+    EnchantedTrinket = 7609
+    TalonTrinket = 8574
+    PythagoremsPiece = 7534
+    BancroftsTalon = 8551
+    TyphonsFang = 15579
+    SoulGem = 15582
+    HealingPotion = 7621
+    ManaPotion = 7622
+    Ward = 7668
+    ElixirofPower = 7803
+    ElixirofDefense = 7804
+    Mace = 7827
+    WarriorsBane = 7522
+    HeavyMace = 7828
+    TitansBane = 7523
+    JotunnsWrath = 7904
+    TheCrusher = 23858
+    BrawlersBeatStick = 24170
+    JotunnsVigor = 21507
+    JotunnsCunning = 22940
+    Morningstar = 7922
+    ChargedMorningstar = 8560
+    HydrasStar = 8568
+    Transcendence = 8547
+    HydrasLament = 8550
+    Heartseeker = 12680
+    Dominance = 19924
+    BewitchedDagger = 24726
+    EldritchDagger = 24727
+    EvolvedTranscendence = 15767
+    BancroftsClaw = 22901
+    NimbleBancroftsTalon = 23136
+    SentryWard = 9005
+    MultiPotion = 9804
+    HiddenDagger = 9812
+    ShortSword = 9813
+    Deathbringer = 7545
+    Rage = 8546
+    DemonBlade = 12674
+    BladedBoomerang = 23854
+    EvolvedRage = 14855
+    MaliciousDeathbringer = 21500
+    EnvenomedDeathbringer = 21501
+    SpikedGauntlet = 9825
+    CursedGauntlet = 9826
+    BoundGauntlet = 9827
+    SoulEater = 7539
+    DevourersGauntlet = 7914
+    Bloodforge = 9236
+    EvolvedDevourersGauntlet = 15736
+    EvolvedSoulEater = 15316
+    AncientBlade = 9828
+    AdventurersBlade = 8239
+    CursedBlade = 18190
+    RelicDagger = 13187
+    WingedBlade = 24175
+    ToxicBlade = 24189
+    LotusSickle = 24190
+    Cudgel = 9830
+    HeavyHammer = 9831
+    Dawnbringer = 23862
+    FrostboundHammer = 24176
+    RuneforgedHammer = 24177
+    FlameforgedHammer = 24728
+    RunebreakingHammer = 24839
+    RoundShield = 9833
+    TowerShield = 8566
+    BerserkersShield = 16544
+    GladiatorsShield = 23853
+    Phalanx = 23863
+    Breastplate = 9837
+    SilverBreastplate = 9838
+    BreastplateofValor = 7641
+    Contagion = 23873
+    SpectralArmor = 24187
+    BreastplateofRegrowth = 24188
+    BreastplateofDetermination = 21483
+    BreastplateofVigilance = 21503
+    EvolvedGauntletofThebes = 15594
+    Cloak = 9840
+    CloakofConcentration = 9360
+    ClericsCloak = 9842
+    MagisCloak = 7935
+    SpiritRobe = 9361
+    MantleofDiscord = 12666
+    PropheticCloak = 24168
+    MagisShelter = 22945
+    MagisRevenge = 22991
+    EvolvedPropheticCloak = 24172
+    Talisman = 9844
+    SilverTalisman = 9846
+    HeartwardAmulet = 11116
+    TalismanofEnergy = 15619
+    Absolution = 23864
+    Pestilence = 23870
+    AmuletofSilence = 21504
+    AmuletoftheStronghold = 21505
+    EmeraldRing = 9847
+    EnchantedRing = 9848
+    DemonicGrip = 8564
+    TelkhinesRing = 9351
+    HastenedRing = 14840
+    CyclopeanRing = 23869
+    MagicFocus = 9849
+    SpellFocus = 9850
+    EnchantedSpear = 9851
+    SpearofDesolation = 12670
+    ObsidianShard = 18179
+    SpearoftheMagus = 18180
+    DivineRuin = 24103
+    UncommonStaff = 9855
+    SorcerersStaff = 9856
+    FortifiedStaff = 14081
+    GemofIsolation = 7594
+    WarlocksStaff = 7917
+    EtherealStaff = 8599
+    EvolvedWarlocksStaff = 15724
+    Spellbook = 9858
+    BookofSouls = 9859
+    BookofThoth = 7334
+    Polynomicon = 7597
+    SoulReaver = 9128
+    TabletofDestinies = 23871
+    EvolvedBookofThoth = 15725
+    LostArtifact = 9860
+    CursedOrb = 7924
+    RestoredArtifact = 9861
+    RodofTahuti = 7600
+    ChronosPendant = 7784
+    DoomOrb = 16882
+    CharonsCoin = 18183
+    EvolvedCharonsCoin = 18314
+    CalamitousRodofTahuti = 21484
+    PerfectedRodofTahuti = 22941
+    ShortBow = 10662
+    ChargedBow = 10687
+    HuntersBow = 14848
+    OdysseusBow = 10482
+    SilverbranchBow = 14084
+    AtalantasBow = 14849
+    Relic = 12333
+    GlowingEmerald = 12663
+    EmeraldTalisman = 7571
+    EmeraldMail = 9839
+    StoneofGaia = 7572
+    GauntletofThebes = 12665
+    MailofRenewal = 20217
+    CannoneersCuirass = 23974
+    Katana = 12671
+    ThousandFoldBlade = 12672
+    HastenedKatana = 14850
+    GoldenBlade = 16592
+    SerratedEdge = 19003
+    Shadowdrinker = 23868
+    EnchantedKusari = 12675
+    SpellboundKusari = 12676
+    GenjisGuard = 12678
+    OniHuntersGarb = 12679
+    ShogunsKusari = 14178
+    ScareTactics = 13668
+    ChaliceofHealing = 14031
+    ChaliceofMana = 14032
+    ChaliceoftheOracle = 14033
+    DruidStone = 14071
+    SagesStone = 14072
+    StoneofBinding = 14175
+    ArchdruidsFury = 23975
+    AbyssalStone = 24011
+    Erosion = 24436
+    BaronsBrew = 16083
+    FightersMask = 16397
+    RangdasMask = 14098
+    GemOfFate = 17349
+    HonedEdge = 17351
+    KnightsShield = 17352
+    ApprenticeStaff = 17353
+    Pridwen = 17355
+    Arondight = 17356
+    Failnot = 17357
+    StaffofMyrddin = 20694
+    GloriousPridwen = 24824
+    ReverentPridwen = 24825
+    PotionofPower = 18194
+    MagicAcorn = 18703
+    LivelyAcorn = 18704
+    NettleAcorn = 18705
+    BristlebushAcorn = 18706
+    ThistlethornAcorn = 18707
+    EvergreenAcorn = 18708
+    ThickbarkAcorn = 18709
+    DeathsToll = 19492
+    DeathsEmbrace = 19493
+    DeathsTemper = 19587
+    GildedArrow = 19494
+    DiamondArrow = 19495
+    OrnateArrow = 19650
+    WarriorsAxe = 19496
+    SunderingAxe = 19512
+    AxeofAnimosity = 24203
+    ManikinScepter = 19500
+    ManikinMace = 19513
+    ManikinHiddenBlade = 19641
+    BumbasDagger = 19502
+    BumbasSpear = 19514
+    BumbasHammer = 19831
+    SandsofTime = 19508
+    PendulumofAges = 19509
+    TheAlternateTimeline = 19654
+    VampiricShroud = 19510
+    BloodsoakedShroud = 19511
+    SacrificialShroud = 19600
+    SentinelsGift = 19609
+    SentinelsBoon = 19625
+    SentinelsEmbrace = 19627
+    Benevolence = 19634
+    Compassion = 19635
+    Heroism = 24204
+    TaintedSteel = 19640
+    TaintedAmulet = 19643
+    TaintedBreastplate = 19645
+    LeatherCowl = 19672
+    HuntersCowl = 19674
+    LeadersCowl = 19675
+    ConduitGem = 19677
+    ArchmagesGem = 19678
+    GemofFocus = 19679
+    EyeoftheJungle = 19694
+    SeeroftheJungle = 19695
+    ProtectoroftheJungle = 19697
+    WardingSigil = 19751
+    SigilofTheOldGuard = 19752
+    InfusedSigil = 19753
+    AegisofJudgement = 21475
+    AegisofAcceleration = 21487
+    BeltoftheBerserker = 21488
+    BeltofInsatiableHunger = 21489
+    ScorchingBlinkRune = 21476
+    CorruptedBlinkRune = 21490
+    BracerofIllumination = 21477
+    BracerofBrilliance = 21508
+    DrownedAnkh = 21478
+    BlightedAnkh = 21491
+    EntanglingWings = 21485
+    HastenedWings = 21492
+    EmblemofIncreasingPeril = 21493
+    EmblemofTremblingTerror = 21494
+    FortifyingShell = 21497
+    PhantomShell = 21509
+    CloakoftheAvatar = 21479
+    CloakoftheAscetic = 21510
+    ChaoticBeads = 21480
+    TemporalBeads = 21511
+    ThornsofOvergrowth = 21495
+    ThornsofSappingStrength = 21496
+    SunderingBlast = 21481
+    SunderingSiphon = 21482
+    PersistentTeleport = 21498
+    HeroicTeleport = 21499
+    ProtectorsMask = 23048
+    LonosMask = 23131
+    MysticalEarring = 23147
+    GleamingEarCuffs = 23148
+    RoseSpikeEarrings = 23149
+    JeweledStuds = 23154
+    FaeBlessedHoops = 23009
+    SphinxsBaubles = 23102
+    ManticoresSpikes = 23143
+    GriffonwingEarrings = 23146
+    ShardRelic = 23795
+    CarapaceShard = 23831
+    VisionShard = 23832
+    HornShard = 24013
+    ClawShard = 24014
+    WingShard = 24015
+    AegisAmulet = 21545
+    BeltofFrenzy = 21550
+    BlinkRune = 21556
+    BracerofRadiance = 21558
+    CursedAnkh = 21561
+    HeavenlyWings = 21564
+    HorrificEmblem = 21566
+    MagicShell = 21568
+    CloakofMeditation = 21570
+    PurificationBeads = 21572
+    ShieldofThorns = 21575
+    SunderingSpear = 21577
+    TeleportFragment = 21579
+    RunicBomb = 23821
+    BluestonePendant = 23855
+    BluestoneBrooch = 23859
+    CorruptedBluestone = 23860
+    GreaterAegisAmulet = 21546
+    GreaterBeltofFrenzy = 21554
+    GreaterBlinkRune = 21557
+    GreaterBracerofRadiance = 21559
+    GreaterCursedAnkh = 21562
+    GreaterHeavenlyWings = 21565
+    GreaterHorrificEmblem = 21567
+    GreaterMagicShell = 21569
+    GreaterCloakofMeditation = 21571
+    GreaterPurificationBeads = 21573
+    GreaterShieldofThorns = 21576
+    GreaterSunderingSpear = 21578
+    GreaterTeleportFragment = 21580
+    WarFlag = 24195
+    SpartanFlag = 19749
+    WarBanner = 24196
+    RestoringWand = 24427
+    RodofHealing = 9857
+    RodofAsclepius = 24408
+    RejuvenatingHeart = 24418
+    LastGasp = 24421
+    BlessedScepter = 24428
+    SplendidScepter = 24429
+    CaduceusClub = 24409
+    VitalAmplifier = 24422
+    SekhmetsScepter = 24423
+    GoldenGooseberriesStep1 = 25254
+    GoldenGooseberriesStep2 = 25266
+    GoldenGooseberries = 25253
+    SturdyStewStep1 = 25255
+    SturdyStewStep2 = 25267
+    SturdyStew = 25285
+    BountifulBaoStep1 = 25286
+    BountifulBaoStep2 = 25287
+    BountifulBao = 25294
+    DurableDrumstickStep1 = 25290
+    DurableDrumstickStep2 = 25291
+    DurableDrumstick = 25292
+    PartyPunchStep1 = 25302
+    PartyPunchStep2 = 25304
+    PartyPunch = 25305
+
+
+class RankEmoji(Enum):
+    ConquestUnranked = "<:blank:1131261670153527346>"
+    ConquestBronze = "<:ConquestBronze:1186696589083951165>"
+    ConquestSilver = "<:ConquestSilver:1186696588085690418>"
+    ConquestGold = "<:ConquestGold:1186696582872191006>"
+    ConquestDiamond = "<:ConquestDiamond:1186696581005709312>"
+    ConquestPlatinum = "<:ConquestPlatinum:1186696586290544781>"
+    ConquestMaster = "<:ConquestMaster:1186696585019658281>"
+    ConquestGrandMaster = "<:ConquestGrandMaster:1186696583836872754>"
+
+    JoustUnranked = "<:blank:1131261670153527346>"
+    JoustBronze = "<:joustBronze:1186698072579899483>"
+    JoustSilver = "<:joustSilver:1186699453890052106>"
+    JoustGold = "<:joustGold:1186698075302014986>"
+    JoustPlatinum = "<:joustPlatinum:1186698078657458238>"
+    JoustDiamond = "<:joustDiamond:1186698074408620122>"
+    JoustMaster = "<:joustMaster:1186698077277532200>"
+    JoustGrandMaster = "<:joustGrandMaster:1186698076337999872>"
+
+    DuelUnranked = "<:blank:1131261670153527346>"
+    DuelBronze = "<:duelBronze:1186700331539763270>"
+    DuelSilver = "<:duelSilver:1186700339777380372>"
+    DuelGold = "<:duelGold:1186700334798733332>"
+    DuelPlatinum = "<:duelPlatinum:1186700338741383198>"
+    DuelDiamond = "<:duelDiamond:1186700333435600927>"
+    DuelMaster = "<:duelMaster:1186700337592160368>"
+    DuelGrandMaster = "<:duelGrandMaster:1186700335989923850>"
+
+
+class Rank(Enum):
+    ConquestUnranked = 0  # Qualifying
+    JoustUnranked = 0  # Qualifying
+    DuelUnranked = 0  # Qualifying
+    BronzeV = 1
+    BronzeIV = 2
+    BronzeIII = 3
+    BronzeII = 4
+    BronzeI = 5
+    SilverV = 6
+    SilverIV = 7
+    SilverIII = 8
+    SilverII = 9
+    SilverI = 10
+    GoldV = 11
+    GoldIV = 12
+    GoldIII = 13
+    GoldII = 14
+    GoldI = 15
+    PlatinumV = 16
+    PlatinumIV = 17
+    PlatinumIII = 18
+    PlatinumII = 19
+    PlatinumI = 20
+    DiamondV = 21
+    DiamondIV = 22
+    DiamondIII = 23
+    DiamondII = 24
+    DiamondI = 25
+    Master = 26
+    Grandmaster = 27

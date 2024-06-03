@@ -46,13 +46,14 @@ def _get_emoji(key, isGod=False):
     :param isGod: Default: True | used to determine ValueError, Blank or " "
     :return: Emoji in discord readable way
     """
+
     sanitized_key = str(key).replace(" ", "").replace("'", "")
     try:
         return smiteEnums.Emoji[sanitized_key].value
 
     except KeyError:
         if isGod is True:
-            return smiteEnums.Emoji["blank"].value
+            return smiteEnums.UIEmoji["blank"].value
         else:
             return smiteEnums.Emoji["noitem"].value
 
@@ -68,7 +69,8 @@ def batchSetEmoji(sortedTeams: tuple[CompleteTeam, CompleteTeam]):
 
     # Get and Set all God Emojis for each team
     for player in sortedTeams[0].CompletePlayerList:
-        player.godEmoji = _get_emoji(player.godName, isGod=True)
+        print(player.godName)
+        player.setGodEmoji = _get_emoji(player.godName, isGod=True)
         player.item1 = _get_emoji(player.Item_Purch_1)
         player.item2 = _get_emoji(player.Item_Purch_2)
         player.item3 = _get_emoji(player.Item_Purch_3)
@@ -78,7 +80,8 @@ def batchSetEmoji(sortedTeams: tuple[CompleteTeam, CompleteTeam]):
         player.itemEmojis = player.groupItemEmojis()  # set to usable string
 
     for player in sortedTeams[1].CompletePlayerList:
-        player.godEmoji = _get_emoji(player.godName, isGod=True)
+        print(player.godName)
+        player.setGodEmoji = _get_emoji(player.godName, isGod=True)
         player.item1 = _get_emoji(player.Item_Purch_1)
         player.item2 = _get_emoji(player.Item_Purch_2)
         player.item3 = _get_emoji(player.Item_Purch_3)
